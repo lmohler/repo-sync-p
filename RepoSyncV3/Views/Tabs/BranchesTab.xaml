@@ -1,0 +1,185 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.BranchesTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:RepoSyncV3.Views"
+             xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+             xmlns:m="clr-namespace:RepoSyncV3.Models">
+    <UserControl.Resources>
+        <!-- toolbar buttons that may wrap: a bottom margin keeps wrapped rows apart and left-aligned -->
+        <Style x:Key="Tool.Wrap" TargetType="Button" BasedOn="{StaticResource Tool}">
+            <Setter Property="Margin" Value="0,0,6,6"/>
+        </Style>
+        <Style x:Key="IconOnly.Wrap" TargetType="Button" BasedOn="{StaticResource IconOnly}">
+            <Setter Property="Margin" Value="0,0,2,6"/>
+        </Style>
+    </UserControl.Resources>
+    <!-- both panes share the header row height, so the two grids start on the same line however the buttons wrap -->
+    <Grid Grid.IsSharedSizeScope="True">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" SharedSizeGroup="BranchHeader"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Margin="0,0,0,2">
+                <Grid Height="28" Margin="0,0,0,6">
+                    <TextBlock Style="{StaticResource Text.Heading}" Text="On this PC" VerticalAlignment="Center"/>
+                </Grid>
+                <WrapPanel>
+                    <Button views:ShortcutTip.Id="start-branch" Style="{StaticResource Tool.Wrap}" Tag="&#xE710;" Content="New" Command="{Binding DataContext.StartBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE8AB;" Content="Switch" Command="{Binding SwitchBranchCommand}"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE8AC;" Content="Rename" Command="{Binding RenameBranchCommand}"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE74D;" Content="Delete" Command="{Binding DeleteBranchCommand}"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE72C;" Content="Merge into current" Command="{Binding MergeBranchCommand}" CommandParameter="{Binding SelectedLocalBranch}" ToolTip="Merge selected branch into your current branch"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE8B7;" Content="Rebase onto" Command="{Binding RebaseOntoCommand}" CommandParameter="{Binding SelectedLocalBranch}" ToolTip="Rebase your current branch onto selected branch"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE894;" Content="{Binding CleanupText}" Command="{Binding CleanupBranchesCommand}" ToolTip="Delete branches that are merged or gone from the server"/>
+                </WrapPanel>
+            </StackPanel>
+            <DataGrid x:Name="LocalBranchGrid" Grid.Row="1" Style="{StaticResource Grid.List}" ItemsSource="{Binding LocalBranches}"
+                      SelectedItem="{Binding SelectedLocalBranch}" MouseDoubleClick="LocalBranch_DoubleClick">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Switch to branch" Command="{Binding SwitchBranchCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="Merge into current branch" Command="{Binding MergeBranchCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="Rebase current branch onto this" Command="{Binding RebaseOntoCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <Separator/>
+                        <MenuItem Header="Rename..." Command="{Binding RenameBranchCommand}"/>
+                        <MenuItem Header="Delete" Command="{Binding DeleteBranchCommand}"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="28">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE73E;" Foreground="{DynamicResource Brush.Status.Clean}"
+                                           Visibility="{Binding IsCurrent, Converter={StaticResource Vis}}" ToolTip="Current branch"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Branch" Width="2*" SortMemberPath="Name">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- pills dock right so a long name trims instead of pushing them out of the cell -->
+                                <DockPanel Background="Transparent" ToolTip="{Binding Subject}">
+                                    <Border DockPanel.Dock="Right" Style="{StaticResource Pill}" Tag="warning" Margin="6,0,0,0" Visibility="{Binding UpstreamGone, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="gone on server"/>
+                                    </Border>
+                                    <Border DockPanel.Dock="Right" Style="{StaticResource Pill}" Tag="purple" Margin="6,0,0,0" Visibility="{Binding IsMerged, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="merged"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Font.Mono}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DockPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Push / pull" Width="96" SortMemberPath="Ahead">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Style="{StaticResource Pill}" Tag="info" Margin="0,0,4,0" Visibility="{Binding Ahead, Converter={StaticResource Vis}}" ToolTip="Commits to push">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE74A;" FontSize="9" Margin="0,0,3,0"/>
+                                            <TextBlock Text="{Binding Ahead}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Pill}" Tag="purple" Visibility="{Binding Behind, Converter={StaticResource Vis}}" ToolTip="Commits to pull">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE74B;" FontSize="9" Margin="0,0,3,0"/>
+                                            <TextBlock Text="{Binding Behind}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE73E;" FontSize="11" Foreground="{DynamicResource Brush.Status.Clean}" ToolTip="Same as the server"
+                                               Visibility="{Binding IsInSync, Converter={StaticResource Vis}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Tracking" Binding="{Binding Tracking}" Width="*"/>
+                    <DataGridTextColumn Header="Last commit" Binding="{Binding Date, Converter={StaticResource Ago}}" Width="95" SortMemberPath="Date">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="ToolTip" Value="{Binding Date, Converter={StaticResource Exact}}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" SharedSizeGroup="BranchHeader"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Margin="0,0,0,2">
+                <Grid Height="28" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MaxWidth="320"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource Text.Heading}" Text="{Binding Repo.ServerName, StringFormat='On {0}'}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                    <TextBox x:Name="RemoteFilterBox" Grid.Column="1" Text="{Binding RemoteFilter, UpdateSourceTrigger=PropertyChanged}" Padding="26,4,8,4" VerticalAlignment="Center" ToolTip="Filter by name or author"/>
+                    <TextBlock Grid.Column="1" Style="{StaticResource Icon}" Text="&#xE71C;" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" Margin="9,0,0,0" IsHitTestVisible="False"/>
+                    <TextBlock Grid.Column="1" Text="Filter by name or author" Foreground="{DynamicResource Brush.TextSecondary}" Margin="28,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                               Visibility="{Binding Text, ElementName=RemoteFilterBox, Converter={StaticResource Vis}, ConverterParameter=invert}"/>
+                </Grid>
+                <WrapPanel>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE896;" Content="Check out" Command="{Binding CheckoutRemoteCommand}"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE72C;" Content="Merge into current" Command="{Binding MergeBranchCommand}" CommandParameter="{Binding SelectedRemoteBranch}" ToolTip="Merge selected server branch into your current branch"/>
+                    <Button Style="{StaticResource Tool.Wrap}" Tag="&#xE8B7;" Content="Rebase onto" Command="{Binding RebaseOntoCommand}" CommandParameter="{Binding SelectedRemoteBranch}" ToolTip="Rebase your current branch onto selected server branch"/>
+                    <Button Style="{StaticResource IconOnly.Wrap}" Content="&#xE8A7;" Command="{Binding OpenBranchCommand}" CommandParameter="{Binding SelectedRemoteBranch}" AutomationProperties.Name="Open on the web" ToolTip="Open on the web"/>
+                    <Button Style="{StaticResource IconOnly.Wrap}" Content="&#xE74D;" Command="{Binding DeleteRemoteBranchCommand}" AutomationProperties.Name="Delete on the server" ToolTip="Delete on the server"/>
+                </WrapPanel>
+            </StackPanel>
+            <DataGrid x:Name="RemoteBranchGrid" Grid.Row="1" Style="{StaticResource Grid.List}" ItemsSource="{Binding RemoteBranches}"
+                      SelectedItem="{Binding SelectedRemoteBranch}" MouseDoubleClick="RemoteBranch_DoubleClick">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Check out as local branch" Command="{Binding CheckoutRemoteCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="Merge into current branch" Command="{Binding MergeBranchCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="Rebase current branch onto this" Command="{Binding RebaseOntoCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <Separator/>
+                        <MenuItem Header="Open on web" Command="{Binding OpenBranchCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="Delete on server" Command="{Binding DeleteRemoteBranchCommand}"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Branch" Width="2*" SortMemberPath="Name">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <DockPanel Background="Transparent" ToolTip="{Binding Subject}">
+                                    <Border DockPanel.Dock="Right" Style="{StaticResource Pill}" Tag="info" Margin="6,0,0,0" Visibility="{Binding HasLocal, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="local"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Font.Mono}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Author" Binding="{Binding Author}" Width="*"/>
+                    <DataGridTextColumn Header="Last commit" Binding="{Binding Date, Converter={StaticResource Ago}}" Width="95" SortMemberPath="Date">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="ToolTip" Value="{Binding Date, Converter={StaticResource Exact}}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Grid>
+</UserControl>

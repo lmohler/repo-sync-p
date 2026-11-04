@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.WorktreesTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,8">
+            <TextBlock Style="{StaticResource Text.Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,460,0"
+                       Text="Extra folders that share this repo, each on its own branch - work on two branches at once without stashing or switching."/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource Tool}" Tag="&#xE8A7;" Content="Open" Command="{Binding OpenWorktreeCommand}" ToolTip="Show this worktree as a card in the list and select it"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE710;" Content="Add worktree" Command="{Binding AddWorktreeCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE74D;" Content="Remove" Command="{Binding RemoveWorktreeCommand}" ToolTip="Delete the worktree folder (the branch and its commits are kept)"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE894;" Content="Prune" Command="{Binding PruneWorktreesCommand}" ToolTip="Forget worktrees whose folder was deleted by hand"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <DataGrid Style="{StaticResource Grid.List}" ItemsSource="{Binding Worktrees}" SelectedItem="{Binding SelectedWorktree}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Folder" Binding="{Binding Path}" Width="*"/>
+                    <DataGridTextColumn Header="Branch" Binding="{Binding BranchText}" Width="220"/>
+                    <DataGridTextColumn Header="Commit" Binding="{Binding ShortHead}" Width="90"/>
+                    <DataGridTextColumn Header="" Binding="{Binding Status}" Width="130"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="No worktrees." Style="{StaticResource Text.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Visibility="{Binding Worktrees.Count, Converter={StaticResource Vis}, ConverterParameter=invert}"/>
+        </Grid>
+    </Grid>
+</UserControl>

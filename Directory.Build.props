@@ -1,0 +1,12 @@
+<Project>
+    <!-- Shared by the app and the test project. -->
+    <PropertyGroup>
+        <!-- Shown in the title bar. The CI workflow (.github/workflows/build.yml) overrides it from the tag (v3.2.0 -> 3.2.0). -->
+        <Version>3.1.0</Version>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <!-- WFAC010: the WinForms analyzer wants DPI set in code; the manifest is what WPF reads. -->
+        <NoWarn>$(NoWarn);WFAC010</NoWarn>
+    </PropertyGroup>
+</Project>

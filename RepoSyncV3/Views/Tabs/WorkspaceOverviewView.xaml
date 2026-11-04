@@ -1,0 +1,170 @@
+<UserControl x:Class="RepoSyncV3.Views.Tabs.WorkspaceOverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+             xmlns:s="clr-namespace:RepoSyncV3.Services">
+    <!-- every repo of the workspace in one table (click a header to sort, pick a grouping), and what background fetches found -->
+    <Grid Visibility="{Binding ShowOverview, Converter={StaticResource Vis}}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="12"/>
+            <ColumnDefinition Width="320"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.ColumnSpan="3">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Overview" Style="{StaticResource Text.Title}"/>
+                <Border CornerRadius="9" Padding="9,2,9,3" Margin="12,4,0,0" VerticalAlignment="Center" Background="{Binding ScopeBrush}">
+                    <TextBlock Text="{Binding ScopeName}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                </Border>
+            </StackPanel>
+            <TextBlock Style="{StaticResource Text.Muted}" Margin="0,4,0,0"
+                       Text="Every repo in this profile. Click a column header to sort, double-click a row to open the repo."/>
+        </StackPanel>
+
+        <!-- toolbar: grouping + bulk refresh -->
+        <Border Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource Card}" Padding="10,6" Margin="0,12,0,8">
+            <WrapPanel VerticalAlignment="Center">
+                <TextBlock Text="Group by" Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Margin="2,0,8,0"/>
+                <RadioButton Style="{StaticResource Chip}" GroupName="ovgroup" Content="None" Command="{Binding SetOverviewGroupCommand}" CommandParameter="none"
+                             IsChecked="{Binding OverviewGroupBy, Mode=OneWay, Converter={StaticResource Equals}, ConverterParameter=none}"/>
+                <RadioButton Style="{StaticResource Chip}" GroupName="ovgroup" Content="Profile" Command="{Binding SetOverviewGroupCommand}" CommandParameter="workspace"
+                             IsChecked="{Binding OverviewGroupBy, Mode=OneWay, Converter={StaticResource Equals}, ConverterParameter=workspace}"/>
+                <RadioButton Style="{StaticResource Chip}" GroupName="ovgroup" Content="Server" Command="{Binding SetOverviewGroupCommand}" CommandParameter="server"
+                             IsChecked="{Binding OverviewGroupBy, Mode=OneWay, Converter={StaticResource Equals}, ConverterParameter=server}"/>
+                <RadioButton Style="{StaticResource Chip}" GroupName="ovgroup" Content="Status" Command="{Binding SetOverviewGroupCommand}" CommandParameter="status"
+                             IsChecked="{Binding OverviewGroupBy, Mode=OneWay, Converter={StaticResource Equals}, ConverterParameter=status}"/>
+                <Border Width="1" Background="{DynamicResource Brush.Divider}" Margin="6,4,12,4"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Refresh" Command="{Binding RefreshAllCommand}" ToolTip="Re-read every repo in this profile (F5)"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE896;" Content="Fetch all" Command="{Binding FetchAllCommand}" ToolTip="Ask the server for news on every repo (Shift+F5)"/>
+                <TextBlock Text="{Binding AutoFetchText}" Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </WrapPanel>
+        </Border>
+
+        <DataGrid x:Name="OverviewGrid" Grid.Row="2" Style="{StaticResource Grid.List}" ItemsSource="{Binding OverviewView}" CanUserSortColumns="True"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+            <DataGrid.InputBindings>
+                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding OpenOverviewRepoCommand}" CommandParameter="{Binding SelectedItem, ElementName=OverviewGrid}"/>
+                <KeyBinding Key="Enter" Command="{Binding OpenOverviewRepoCommand}" CommandParameter="{Binding SelectedItem, ElementName=OverviewGrid}"/>
+            </DataGrid.InputBindings>
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="8,8,0,4">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Text="{Binding ItemCount, StringFormat='  ({0})'}" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Repo" SortMemberPath="Name" Width="2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="vm:RepoViewModel">
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Path}">
+                                <Border Width="18" Height="18" CornerRadius="4" Background="{Binding MonogramBrush}" Margin="0,0,7,0">
+                                    <TextBlock Text="{Binding Monogram}" Foreground="White" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE718;" FontSize="10" Margin="0,0,5,0" Foreground="{DynamicResource Brush.Accent}"
+                                           Visibility="{Binding Pinned, Converter={StaticResource Vis}}" ToolTip="Pinned"/>
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE823;" FontSize="10" Margin="6,0,0,0" Foreground="{DynamicResource Brush.TextSecondary}"
+                                           Visibility="{Binding IsStale, Converter={StaticResource Vis}}" ToolTip="{Binding StaleText}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Profile" SortMemberPath="WorkspaceName" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="vm:RepoViewModel">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="7" Height="7" Fill="{Binding WorkspaceBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding WorkspaceName}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Server" Binding="{Binding ServerHost}" Width="Auto"/>
+                <DataGridTextColumn Header="Branch" Binding="{Binding Branch}" Width="1.4*" FontFamily="{StaticResource Font.Mono}"/>
+                <DataGridTextColumn Header="To push" Binding="{Binding Ahead}" Width="Auto"/>
+                <DataGridTextColumn Header="To pull" Binding="{Binding Behind}" Width="Auto"/>
+                <DataGridTextColumn Header="Changes" Binding="{Binding ChangeCount}" Width="Auto"/>
+                <DataGridTemplateColumn Header="Pipeline" SortMemberPath="PipelineKind" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="vm:RepoViewModel">
+                            <Border Style="{StaticResource Pill.Pipeline}" Tag="{Binding PipelineKind}" Visibility="{Binding HasPipeline, Converter={StaticResource Vis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="{Binding PipelineKind}" Width="7" Height="7" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding PipelineLabel}"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Merge request" SortMemberPath="MrKind" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="vm:RepoViewModel">
+                            <Border Style="{StaticResource Pill.MergeRequest}" Tag="{Binding MrKind}" Visibility="{Binding HasMergeRequest, Converter={StaticResource Vis}}"
+                                    ToolTip="{Binding MergeRequest.Title}">
+                                <TextBlock Text="{Binding MrBadge}"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Status" SortMemberPath="State" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="vm:RepoViewModel">
+                            <Border Style="{StaticResource StatePill}" CornerRadius="8" Padding="7,1,7,2" HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding StateLabel}" FontSize="11" FontWeight="SemiBold"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- what changed: filled by background / manual fetches -->
+        <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource Card}" Padding="10,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Style="{StaticResource Button.Link}" Content="Clear" Command="{Binding ClearFeedCommand}" ToolTip="Forget every line in the feed"/>
+                    <TextBlock Style="{StaticResource SectionLabel}" Text="WHAT CHANGED" Margin="0" VerticalAlignment="Center"/>
+                </DockPanel>
+                <ListBox Grid.Row="1" ItemsSource="{Binding Feed}" Margin="0,6,0,0" BorderThickness="0" Background="Transparent"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="s:FeedItem">
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource Pill}" Tag="{Binding Tone}" Width="22" Height="22" Padding="0" CornerRadius="11" VerticalAlignment="Top">
+                                    <TextBlock Style="{StaticResource Icon}" Text="{Binding Icon}" FontSize="10" HorizontalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding TimeText}" Style="{StaticResource Text.Muted}" FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Grid.Row="1" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,10,0,0"
+                           Visibility="{Binding Feed.Count, Converter={StaticResource Vis}, ConverterParameter=invert}"
+                           Text="Nothing yet. New commits on the server, finished pipelines and merge request news from each fetch show up here."/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

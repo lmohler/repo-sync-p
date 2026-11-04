@@ -1,0 +1,60 @@
+<Window x:Class="RepoSyncV3.Views.AccountsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="600" Title="Accounts">
+    <StackPanel Margin="20,18">
+        <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="GitHub and GitLab accounts"/>
+        <TextBlock Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,6,0,14"
+                   Text="Pull / merge requests, Actions / pipelines and project lists use each server's API with a personal access token. Tokens are encrypted for your Windows account and stored next to the app."/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="SERVER"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <RadioButton x:Name="GitHubRadio" Style="{StaticResource Chip}" Content="GitHub (github.com)" GroupName="kind" Checked="Kind_Changed"/>
+            <RadioButton x:Name="GitLabRadio" Style="{StaticResource Chip}" Content="GitLab" GroupName="kind" Checked="Kind_Changed"/>
+        </StackPanel>
+        <TextBox x:Name="HostBox" ToolTip="Your GitLab server, e.g. gitlab.example.com"/>
+        <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="One token per server, used by every profile."/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="PERSONAL ACCESS TOKEN" Margin="1,12,0,6"/>
+        <PasswordBox x:Name="TokenBox"/>
+        <Button Style="{StaticResource Button.Link}" HorizontalAlignment="Left" Margin="-4,6,0,0" Click="CreateToken_Click">
+            <TextBlock x:Name="CreateTokenText"/>
+        </Button>
+
+        <Border x:Name="ResultBorder" Style="{StaticResource Pill}" Margin="0,12,0,0" HorizontalAlignment="Left" Visibility="Collapsed" Padding="10,5" CornerRadius="6">
+            <TextBlock x:Name="ResultText" TextWrapping="Wrap" FontWeight="Normal" FontSize="12"/>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button x:Name="SaveButton" Content="Test &amp; save" Style="{StaticResource Button.Primary}" Click="Save_Click"/>
+        </StackPanel>
+
+        <Border Style="{StaticResource SidebarDivider}"/>
+        <TextBlock Style="{StaticResource SectionLabel}" Text="SAVED"/>
+        <ItemsControl x:Name="SavedList">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE8D7;" Foreground="{DynamicResource Brush.Status.Clean}" Margin="0,0,8,0"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Host}" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Kind}" Style="{StaticResource Text.Muted}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="3" Style="{StaticResource Button.Ghost}" Content="Remove" Tag="{Binding Host}" Click="Remove_Click"/>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock x:Name="NoneText" Style="{StaticResource Text.Muted}" Text="No tokens saved yet."/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button Content="Close" IsCancel="True" MinWidth="80"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

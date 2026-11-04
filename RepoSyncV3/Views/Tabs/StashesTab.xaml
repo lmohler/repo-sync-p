@@ -1,0 +1,53 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.StashesTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:RepoSyncV3.Views"
+             xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+             xmlns:m="clr-namespace:RepoSyncV3.Models">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource Text.Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,10,0"
+                       Text="Put unfinished work aside (e.g. to switch branches or pull), then bring it back later."/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button views:ShortcutTip.Id="stash" Style="{StaticResource Tool}" Tag="&#xE74E;" Content="Stash my changes" Command="{Binding StashCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE77F;" Content="Apply" Command="{Binding ApplyStashCommand}" ToolTip="Bring the changes back and keep the stash"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE77F;" Content="Pop" Command="{Binding PopStashCommand}" ToolTip="Bring the changes back and remove the stash"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE74D;" Content="Delete" Command="{Binding DropStashCommand}"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="420"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <DataGrid Style="{StaticResource Grid.List}" ItemsSource="{Binding Stashes}" SelectedItem="{Binding SelectedStash}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Stash" Binding="{Binding Name}" Width="90"/>
+                        <DataGridTextColumn Header="Note" Binding="{Binding Message}" Width="*"/>
+                        <DataGridTextColumn Header="When" Binding="{Binding Date, Converter={StaticResource Ago}}" Width="90">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="ToolTip" Value="{Binding Date, Converter={StaticResource Exact}}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock Text="No stashes." Style="{StaticResource Text.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="{Binding Stashes.Count, Converter={StaticResource Vis}, ConverterParameter=invert}"/>
+            </Grid>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+            <ListBox Grid.Column="2" Style="{StaticResource DiffList}" ItemsSource="{Binding StashDiff}"/>
+        </Grid>
+    </Grid>
+</UserControl>

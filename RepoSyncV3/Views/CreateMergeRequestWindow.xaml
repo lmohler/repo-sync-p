@@ -1,0 +1,47 @@
+<Window x:Class="RepoSyncV3.Views.CreateMergeRequestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="640" Title="Create merge request">
+    <StackPanel Margin="20,18">
+        <TextBlock x:Name="HeadingText" Style="{StaticResource Text.Heading}" FontSize="15" Text="Create merge request"/>
+        <TextBlock x:Name="BranchText" Style="{StaticResource Text.Muted}" Margin="0,4,0,14"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="TITLE"/>
+        <TextBox x:Name="TitleBox" TextChanged="Title_Changed"/>
+
+        <DockPanel Margin="1,14,0,6">
+            <StackPanel x:Name="TemplatePanel" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed">
+                <TextBlock Style="{StaticResource Text.Muted}" Text="Template" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox x:Name="TemplateBox" MinWidth="160" SelectionChanged="Template_Changed" AutomationProperties.Name="Description template"/>
+            </StackPanel>
+            <TextBlock Style="{StaticResource SectionLabel}" Text="DESCRIPTION" VerticalAlignment="Bottom" Margin="0"/>
+        </DockPanel>
+        <TextBox x:Name="DescriptionBox" Style="{StaticResource TextBox.Multiline}" Height="150" VerticalScrollBarVisibility="Auto"/>
+        <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="Filled in from your commits. Markdown works."/>
+
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionLabel}" Text="MERGE INTO"/>
+                <ComboBox x:Name="TargetBox"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                <CheckBox x:Name="DraftBox" Content="Draft (not ready for review yet)" Margin="0,0,0,6"/>
+                <CheckBox x:Name="RemoveSourceBox" Content="Delete the branch when merged" Margin="0,0,0,6"/>
+                <TextBlock x:Name="GitHubNote" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Visibility="Collapsed" Text="Squash and branch deletion are chosen when you merge on GitHub."/>
+                <CheckBox x:Name="SquashBox" Content="Squash commits when merged"/>
+            </StackPanel>
+        </Grid>
+
+        <CheckBox x:Name="OpenBox" Content="Open it in the browser afterwards" Margin="0,14,0,0"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+            <Button x:Name="OkButton" Content="Create merge request" IsDefault="True" Style="{StaticResource Button.Primary}" Click="Ok_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,26 @@
+bin/
+obj/
+dist/
+publish/
+.vs/
+.vscode/
+*.user
+*.suo
+
+# App data written next to the exe (settings, encrypted tokens, logs)
+settings.json
+settings.json.*
+tokens.json
+gitlab-tokens.json
+errors.log
+
+# Migration exports hold machine and repo details
+repo-sync-export-*.json
+
+# Test output
+TestResults/
+*.trx
+coverage*.xml
+
+Thumbs.db
+Desktop.ini

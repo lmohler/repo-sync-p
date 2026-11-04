@@ -1,0 +1,75 @@
+<Window x:Class="RepoSyncV3.Views.ConflictWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:s="clr-namespace:RepoSyncV3.Services"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="1100" Height="760" ResizeMode="CanResizeWithGrip" Title="Resolve conflicts">
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="160"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock x:Name="HeadingText" Style="{StaticResource Text.Heading}" FontSize="15"/>
+            <TextBlock Style="{StaticResource Text.Muted}" Margin="0,4,0,8" TextWrapping="Wrap"
+                       Text="For each conflict pick which side to keep, or both. Mine = the branch you're on. Save writes the file and marks it resolved."/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="BlockList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="s:ConflictBlock">
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,6">
+                                    <TextBlock DockPanel.Dock="Left" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <Run Text="CONFLICT"/> <Run Text="{Binding Number, Mode=OneWay}"/>
+                                    </TextBlock>
+                                    <TextBlock DockPanel.Dock="Left" Text="resolved" Style="{StaticResource Text.Muted}" Foreground="{DynamicResource Brush.Text.Success}" VerticalAlignment="Center"
+                                               Visibility="{Binding IsResolved, Converter={StaticResource Vis}}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <RadioButton Style="{StaticResource Chip}" Content="Mine" Tag="Mine" Checked="Choice_Checked" GroupName="{Binding Number, StringFormat=b{0}}"/>
+                                        <RadioButton Style="{StaticResource Chip}" Content="Theirs" Tag="Theirs" Checked="Choice_Checked" GroupName="{Binding Number, StringFormat=b{0}}"/>
+                                        <RadioButton Style="{StaticResource Chip}" Content="Mine, then theirs" Tag="MineThenTheirs" Checked="Choice_Checked" GroupName="{Binding Number, StringFormat=b{0}}"/>
+                                        <RadioButton Style="{StaticResource Chip}" Content="Theirs, then mine" Tag="TheirsThenMine" Checked="Choice_Checked" GroupName="{Binding Number, StringFormat=b{0}}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource Text.Muted}" Text="MINE" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                                        <TextBox Text="{Binding MineText, Mode=OneWay}" IsReadOnly="True" FontFamily="{StaticResource Font.Mono}" TextWrapping="NoWrap"
+                                                 MaxHeight="260" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AutomationProperties.Name="Your side"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Style="{StaticResource Text.Muted}" Text="THEIRS" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                                        <TextBox Text="{Binding TheirsText, Mode=OneWay}" IsReadOnly="True" FontFamily="{StaticResource Font.Mono}" TextWrapping="NoWrap"
+                                                 MaxHeight="260" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AutomationProperties.Name="Their side"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="2" Style="{StaticResource SectionLabel}" Text="RESULT (EDITABLE)" Margin="1,10,0,6"/>
+        <TextBox x:Name="ResultBox" Grid.Row="3" FontFamily="{StaticResource Font.Mono}" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AutomationProperties.Name="Resolved file"/>
+
+        <DockPanel Grid.Row="4" Margin="0,16,0,0">
+            <TextBlock x:Name="LeftText" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+                <Button x:Name="SaveButton" Content="Save &amp; mark resolved" IsDefault="True" Style="{StaticResource Button.Primary}" Click="Save_Click"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

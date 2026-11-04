@@ -1,0 +1,115 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.MergeRequestsTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:RepoSyncV3.Views"
+             xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+             xmlns:m="clr-namespace:RepoSyncV3.Models">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <ComboBox Width="150" ItemsSource="{Binding MergeRequestScopes}" SelectedItem="{Binding MergeRequestScope}" Margin="0,0,8,0"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Refresh" Command="{Binding RefreshMergeRequestsCommand}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button views:ShortcutTip.Id="create-mr" Style="{StaticResource Tool}" Tag="&#xE710;" Content="New for this branch" Command="{Binding CreateMergeRequestCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE8A7;" Content="All on the web" Command="{Binding OpenMergeRequestListCommand}"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="2*" MinWidth="320"/>
+            </Grid.ColumnDefinitions>
+            <DataGrid Style="{StaticResource Grid.List}" ItemsSource="{Binding MergeRequests}" SelectedItem="{Binding SelectedMergeRequest}" RowHeight="40">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Binding="{Binding Reference}" Width="55"/>
+                    <DataGridTemplateColumn Header="Title" Width="3*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Branches}" Style="{StaticResource Text.Muted}" FontSize="11" FontFamily="{StaticResource Font.Mono}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Author" Binding="{Binding AuthorName}" Width="*"/>
+                    <DataGridTemplateColumn Header="Status" Width="115">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Pill.MergeRequest}" Tag="{Binding Kind}" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding Readiness}"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Updated" Binding="{Binding UpdatedAt, Converter={StaticResource Ago}}" Width="90">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="ToolTip" Value="{Binding UpdatedAt, Converter={StaticResource Exact}}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="{Binding ServerMessage}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.TextSecondary}" TextAlignment="Center"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40" Visibility="{Binding ServerMessage, Converter={StaticResource Vis}}"/>
+
+            <Border Grid.Column="2" Style="{StaticResource Card}" Visibility="{Binding SelectedMergeRequest, Converter={StaticResource Vis}}">
+                <Grid DataContext="{Binding MergeRequestDetail}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Style="{StaticResource Pill.MergeRequest}" Tag="{Binding Kind}">
+                                <TextBlock Text="{Binding Readiness}"/>
+                            </Border>
+                            <TextBlock Text="{Binding Reference}" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Heading}" FontSize="15" TextWrapping="Wrap" Margin="0,8,0,4"/>
+                        <TextBlock Text="{Binding Branches}" Style="{StaticResource Text.Muted}" FontFamily="{StaticResource Font.Mono}"/>
+                        <TextBlock Style="{StaticResource Text.Muted}" Margin="0,2,0,0">
+                            <Run Text="by "/><Run Text="{Binding AuthorName, Mode=OneWay}"/><Run Text="  ·  updated "/><Run Text="{Binding UpdatedAt, Mode=OneWay, Converter={StaticResource Ago}}"/><Run Text="  ·  "/><Run Text="{Binding UserNotesCount, Mode=OneWay}"/><Run Text=" comment(s)"/>
+                        </TextBlock>
+                        <Border Style="{StaticResource Pill}" Tag="info" Margin="0,10,0,0" HorizontalAlignment="Left" CornerRadius="6" Padding="9,4">
+                            <TextBlock Text="{Binding MergeStatusText}" FontWeight="Normal" FontSize="12"/>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="{Binding PipelineKind}" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding PipelineText}" Style="{StaticResource Text.Muted}"/>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SectionLabel}" Text="DESCRIPTION" Margin="1,12,0,4"/>
+                    </StackPanel>
+                    <TextBox Grid.Row="1" Text="{Binding Description, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource TextBox.Multiline}"
+                             VerticalScrollBarVisibility="Auto" MinHeight="60"/>
+                    <StackPanel Grid.Row="2" Margin="0,10,0,0" DataContext="{Binding DataContext.Detail, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <WrapPanel>
+                            <CheckBox Content="Squash" IsChecked="{Binding SquashOnMerge}" Margin="0,0,14,6"/>
+                            <CheckBox Content="Delete source branch" IsChecked="{Binding RemoveSourceOnMerge}" Margin="0,0,0,6"/>
+                        </WrapPanel>
+                        <WrapPanel>
+                            <Button Content="Merge" Style="{StaticResource Button.Primary}" Command="{Binding MergeCommand}" Margin="0,0,6,6"/>
+                            <Button Content="Review..." Command="{Binding ReviewMergeRequestCommand}" Margin="0,0,6,6" ToolTip="Diff and comments in the app"/>
+                            <Button Content="Approve" Command="{Binding ApproveCommand}" Margin="0,0,6,6"/>
+                            <Button Content="Draft / ready" Command="{Binding MarkReadyCommand}" Margin="0,0,6,6"/>
+                            <Button Content="Check out" Command="{Binding CheckoutMergeRequestCommand}" Margin="0,0,6,6"/>
+                            <Button Content="Open" Command="{Binding OpenMergeRequestCommand}" Margin="0,0,0,6"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

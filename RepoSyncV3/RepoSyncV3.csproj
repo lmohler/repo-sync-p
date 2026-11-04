@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <RootNamespace>RepoSyncV3</RootNamespace>
+        <AssemblyName>repo-sync-v3</AssemblyName>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <!-- WinForms only for the tray NotifyIcon (pipeline / merge request notifications) -->
+        <UseWindowsForms>true</UseWindowsForms>
+        <ApplicationIcon>app.ico</ApplicationIcon>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <DefaultItemExcludes>$(DefaultItemExcludes);dist\**</DefaultItemExcludes>
+    </PropertyGroup>
+    <!-- Release: one self-contained exe (no .NET install needed). -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <DebugType>none</DebugType>
+        <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
+    </PropertyGroup>
+    <ItemGroup>
+        <Resource Include="app.ico" />
+    </ItemGroup>
+    <!-- WPF and WinForms both add implicit usings; colliding WinForms/Drawing types are written fully qualified. -->
+    <ItemGroup>
+        <Using Remove="System.Windows.Forms" />
+        <Using Remove="System.Drawing" />
+    </ItemGroup>
+</Project>

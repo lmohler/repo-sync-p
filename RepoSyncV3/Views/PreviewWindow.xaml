@@ -1,0 +1,57 @@
+<Window x:Class="RepoSyncV3.Views.PreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="640" MaxHeight="720" SizeToContent="Height" Title="What will this do">
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="HeadingText" Style="{StaticResource Text.Heading}" FontSize="15" Margin="0,0,0,8" TextWrapping="Wrap"/>
+        <TextBlock x:Name="SummaryText" Grid.Row="1" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="SectionList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="Box" BorderThickness="3,0,0,0" BorderBrush="{DynamicResource Brush.Warning}" Background="{DynamicResource Brush.Tint.Warning}"
+                                Padding="10,6" Margin="0,4" CornerRadius="3">
+                            <StackPanel>
+                                <TextBlock x:Name="Head" Text="{Binding Title}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text.Warning}"/>
+                                <ItemsControl ItemsSource="{Binding Items}" Margin="0,4,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{DynamicResource Brush.TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{Binding Note}" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,4,0,0">
+                                    <TextBlock.Visibility>
+                                        <Binding Path="Note" Converter="{StaticResource Vis}"/>
+                                    </TextBlock.Visibility>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Tone}" Value="error">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Brush.Error}"/>
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource Brush.Tint.Error}"/>
+                                <Setter TargetName="Head" Property="Foreground" Value="{DynamicResource Brush.Text.Error}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Tone}" Value="info">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource Brush.Tint.Info}"/>
+                                <Setter TargetName="Head" Property="Foreground" Value="{DynamicResource Brush.Text.Info}"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+            <Button x:Name="OkButton" Content="OK" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="90" Click="Ok_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

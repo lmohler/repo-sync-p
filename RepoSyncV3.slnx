@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RepoSyncV3.Tests/RepoSyncV3.Tests.csproj" />
+  <Project Path="RepoSyncV3/RepoSyncV3.csproj" />
+</Solution>

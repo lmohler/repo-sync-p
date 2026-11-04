@@ -1,0 +1,210 @@
+<Window x:Class="RepoSyncV3.Views.ImportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize" SizeToContent="Manual" Width="1150" Height="760" MinWidth="760" MinHeight="460"
+        Title="Import from another computer">
+    <Window.Resources>
+        <CollectionViewSource x:Key="SettingsView">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Group"/>
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+        <Style x:Key="Cell.Wrap" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="6,3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="0,0,0,10">
+            <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Import from another computer"/>
+            <TextBlock x:Name="SourceText" Style="{StaticResource Text.Muted}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="1" x:Name="Tabs">
+            <!-- ===================== REPOS -->
+            <TabItem x:Name="ReposTab" Header="Repositories">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                               Text="Repos that aren't on this computer are cloned; folders that are already here are added to the list. Paths in your old user folder are moved to this one - edit a folder to put a repo somewhere else."/>
+                    <DataGrid x:Name="ReposGrid" Grid.Row="1" Style="{StaticResource Grid.List}" RowHeight="30" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="34">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Selected, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanImport}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Repo" Binding="{Binding Name}" Width="180">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Folder on this computer" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Target, UpdateSourceTrigger=LostFocus}" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                                                 VerticalAlignment="Center" Margin="0,1"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="What happens" Width="1.3*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="Tone" Style="{StaticResource Pill}" Tag="" HorizontalAlignment="Left" ToolTip="{Binding Status}">
+                                            <TextBlock Text="{Binding Status}" TextTrimming="CharacterEllipsis"/>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Action}" Value="Clone">
+                                                <Setter TargetName="Tone" Property="Tag" Value="info"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Action}" Value="AddExisting">
+                                                <Setter TargetName="Tone" Property="Tag" Value="success"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Clone from" Binding="{Binding CloneUrl}" Width="1.5*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        <Setter Property="ToolTip" Value="{Binding CloneUrl}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="All" Style="{StaticResource Button.Ghost}" Click="ReposAll_Click"/>
+                        <Button Content="None" Style="{StaticResource Button.Ghost}" Click="ReposNone_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ===================== SETTINGS DIFF -->
+            <TabItem x:Name="SettingsTab" Header="Settings">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Text.Heading}" Text="Keep this computer's settings, or take the ones from the file?"/>
+                                <TextBlock x:Name="SettingsQuestion" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                           Text="Only settings that differ are listed. Ticked rows take the value from the file; unticked rows keep this computer's value."/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                <Button Content="Keep all mine" Click="KeepAll_Click" Margin="0,0,8,0" MinWidth="110"/>
+                                <Button Content="Take all from file" Click="TakeAll_Click" MinWidth="130"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <TextBlock x:Name="NoDiffText" Grid.Row="1" Style="{StaticResource Text.Muted}" Visibility="Collapsed" Margin="2,6,0,0"
+                               Text="Every setting in the file is the same as on this computer."/>
+                    <DataGrid x:Name="SettingsGrid" Grid.Row="1" Style="{StaticResource Grid.List}" ItemsSource="{Binding Source={StaticResource SettingsView}}"
+                              RowHeight="NaN" SelectionMode="Single">
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource SectionLabel}" Margin="4,10,0,4"/>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Take" Width="46">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Take, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanTake}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  ToolTip="Ticked: use the value from the file. Unticked: keep this computer's value."/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Setting" Binding="{Binding Label}" Width="1.1*" ElementStyle="{StaticResource Cell.Wrap}"/>
+                            <DataGridTemplateColumn Header="This computer" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="Bg" Background="{DynamicResource Brush.Diff.DeleteBackground}" Margin="0,1">
+                                            <TextBlock x:Name="Txt" Text="{Binding Mine}" Style="{StaticResource Cell.Wrap}" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                                                       Foreground="{DynamicResource Brush.Diff.DeleteText}"/>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <!-- the side that stays is shown as kept -->
+                                            <DataTrigger Binding="{Binding Take}" Value="False">
+                                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.Diff.AddBackground}"/>
+                                                <Setter TargetName="Txt" Property="Foreground" Value="{DynamicResource Brush.Diff.AddText}"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="From the file" Width="1.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="Bg" Background="{DynamicResource Brush.Diff.DeleteBackground}" Margin="0,1">
+                                            <TextBlock x:Name="Txt" Text="{Binding Theirs}" Style="{StaticResource Cell.Wrap}" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                                                       Foreground="{DynamicResource Brush.Diff.DeleteText}"/>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Take}" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.Diff.AddBackground}"/>
+                                                <Setter TargetName="Txt" Property="Foreground" Value="{DynamicResource Brush.Diff.AddText}"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="0.8*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Cell.Wrap}">
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock x:Name="AfterText" Grid.Row="2" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+
+        <Grid Grid.Row="3" Margin="0,14,0,0">
+            <TextBlock x:Name="SummaryText" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+                <Button Content="Import" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="100" Click="Import_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

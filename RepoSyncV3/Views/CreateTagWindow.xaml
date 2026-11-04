@@ -1,0 +1,28 @@
+<Window x:Class="RepoSyncV3.Views.CreateTagWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="480" Title="Create tag">
+    <StackPanel Margin="20,18">
+        <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Create git tag"/>
+        <TextBlock x:Name="RepoText" Style="{StaticResource Text.Muted}" Margin="0,4,0,14"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="TAG NAME"/>
+        <TextBox x:Name="NameBox" TextChanged="NameBox_TextChanged"/>
+        <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="e.g. v1.0.0 or release-2026-10"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="COMMIT / TARGET" Margin="1,14,0,6"/>
+        <TextBox x:Name="TargetBox" Text="HEAD"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="ANNOTATED MESSAGE (OPTIONAL)" Margin="1,14,0,6"/>
+        <TextBox x:Name="MessageBox" Style="{StaticResource TextBox.Multiline}" Height="60" VerticalScrollBarVisibility="Auto"/>
+        <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="Leave empty for a lightweight tag, or write a release note for an annotated tag."/>
+
+        <CheckBox x:Name="PushBox" Content="Push tag to server right away" Margin="0,14,0,0" IsChecked="True"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+            <Button x:Name="OkButton" Content="Create tag" IsDefault="True" Style="{StaticResource Button.Primary}" Click="Ok_Click" IsEnabled="False"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
+

@@ -1,0 +1,52 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.TagsTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+             xmlns:m="clr-namespace:RepoSyncV3.Models">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,8">
+            <TextBlock Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Text="Release tags and version milestones."/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource Tool}" Tag="&#xE710;" Content="New tag" Command="{Binding CreateTagCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE74A;" Content="Push tag" Command="{Binding PushTagCommand}" ToolTip="Push selected tag to server"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE74A;" Content="Push all tags" Command="{Binding PushAllTagsCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE74D;" Content="Delete" Command="{Binding DeleteTagCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE74D;" Content="Delete on server" Command="{Binding DeleteRemoteTagCommand}"/>
+            </StackPanel>
+        </Grid>
+        <DataGrid Grid.Row="1" Style="{StaticResource Grid.List}" ItemsSource="{Binding Tags}" SelectedItem="{Binding SelectedTag}">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Tag" Width="200" SortMemberPath="Name">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE8EC;" Foreground="{DynamicResource Brush.Accent}" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Commit" Binding="{Binding Hash}" Width="90">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Message" Binding="{Binding Subject}" Width="*"/>
+                <DataGridTextColumn Header="Date" Binding="{Binding Date, Converter={StaticResource Ago}}" Width="120" SortMemberPath="Date">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="ToolTip" Value="{Binding Date, Converter={StaticResource Exact}}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,207 @@
+<Window x:Class="RepoSyncV3.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="780" Title="Settings">
+    <Window.Resources>
+        <!-- label above a profile field -->
+        <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource SectionLabel}">
+            <Setter Property="Margin" Value="1,10,0,4"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Settings" Margin="0,0,0,10"/>
+
+        <TabControl Grid.Row="1" x:Name="Tabs" MinHeight="470">
+            <!-- ===================== PROFILES -->
+            <TabItem Header="Profiles" x:Name="ProfilesTab">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="230"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.ColumnSpan="3" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,0,0,10"
+                               Text="Each profile has its own repo list. Only the profile picked in the sidebar is loaded and fetched. Add a repo while its profile is picked, or move it later: right-click its card > Move to profile, or Repo settings."/>
+
+                    <!-- profile list -->
+                    <DockPanel Grid.Row="1">
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="Add" Click="AddProfile_Click" Margin="0,0,6,0" ToolTip="Add a new profile"/>
+                            <Button x:Name="RemoveProfileButton" Content="Remove" Click="RemoveProfile_Click" Margin="0,0,6,0" ToolTip="Remove the selected profile; its repos move to another profile"/>
+                            <Button Style="{StaticResource Button.Ghost}" Content="&#xE70E;" FontFamily="Segoe MDL2 Assets" Click="MoveUp_Click"
+                                    ToolTip="Move up (the order sets Ctrl+1..9)" AutomationProperties.Name="Move up"/>
+                            <Button Style="{StaticResource Button.Ghost}" Content="&#xE70D;" FontFamily="Segoe MDL2 Assets" Click="MoveDown_Click"
+                                    ToolTip="Move down" AutomationProperties.Name="Move down"/>
+                        </StackPanel>
+                        <ListBox x:Name="ProfileList" SelectionChanged="ProfileList_SelectionChanged" AutomationProperties.Name="Profiles">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="2,3">
+                                        <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{Binding Brush}"/>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding CountText}" Style="{StaticResource Text.Muted}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+
+                    <!-- the selected profile -->
+                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource Card}">
+                        <StackPanel x:Name="ProfileEditor">
+                            <StackPanel Orientation="Horizontal">
+                                <Border x:Name="ProfileSwatch" Width="14" Height="14" CornerRadius="7" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="ProfileHeading" Style="{StaticResource Text.Heading}"/>
+                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="140"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="NAME"/>
+                                    <TextBox x:Name="ProfileName" TextChanged="ProfileName_Changed" AutomationProperties.Name="Profile name"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="COLOR (#RRGGBB)"/>
+                                    <TextBox x:Name="ProfileColor" TextChanged="Color_Changed" AutomationProperties.Name="Profile color"/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="COMMIT AS (NAME / EMAIL)"/>
+                            <TextBox x:Name="ProfileGitName" ToolTip="Author name for commits in this profile's repos" AutomationProperties.Name="Commit name"/>
+                            <TextBox x:Name="ProfileGitEmail" Margin="0,6,0,0" AutomationProperties.Name="Commit email"
+                                     ToolTip="Author email for commits in this profile's repos, e.g. your GitHub email or the one on your GitLab account"/>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="CLONE INTO"/>
+                            <TextBox x:Name="ProfileClone" AutomationProperties.Name="Clone folder"/>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="BACKGROUND FETCH EVERY (MINUTES, 0 = OFF)"/>
+                            <TextBox x:Name="ProfileFetch" HorizontalAlignment="Left" MinWidth="80" AutomationProperties.Name="Background fetch minutes"/>
+                            <CheckBox x:Name="ProfileNotify" Content="Notifications for this profile's repos" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                        <TextBlock Style="{StaticResource SectionLabel}" Text="WRONG IDENTITY ON COMMIT / PUSH"/>
+                        <ComboBox x:Name="IdentityCheckBox" HorizontalAlignment="Left" MinWidth="260">
+                            <ComboBoxItem Content="Stop and ask (recommended)" Tag="block"/>
+                            <ComboBoxItem Content="Warn, then go ahead" Tag="warn"/>
+                            <ComboBoxItem Content="Don't check" Tag="off"/>
+                        </ComboBox>
+                        <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="1,4,0,0"
+                                   Text="Compares the repo's git email with its profile's 'commit as' email."/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ===================== GENERAL -->
+            <TabItem Header="General">
+                <StackPanel Margin="0,8,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="THEME"/>
+                            <ComboBox x:Name="ThemeBox">
+                                <ComboBoxItem Content="Follow Windows"/>
+                                <ComboBoxItem Content="Light"/>
+                                <ComboBoxItem Content="Dark"/>
+                            </ComboBox>
+                            <CheckBox x:Name="CompactBox" Content="Compact density (smaller rows and padding)" Margin="0,8,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="BACKGROUND FETCH"/>
+                            <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Text="Set per profile on the Profiles tab."/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Style="{StaticResource SectionLabel}" Text="NEW BRANCH NAME PATTERN" Margin="1,14,0,6"/>
+                    <TextBox x:Name="PatternBox"/>
+                    <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="{}{name} = what you type, {user} = your git user name. Example: feature/{name}-{user}"/>
+
+                    <TextBlock Style="{StaticResource SectionLabel}" Text="TICKET LINK" Margin="1,14,0,6"/>
+                    <TextBox x:Name="TicketUrlBox"/>
+                    <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" TextWrapping="Wrap"
+                               Text="{}{ticket} = the ticket in the branch name (PROJ-123). Added to new merge / pull requests. Example: https://app.clickup.com/t/{ticket}"/>
+
+                    <TextBlock Style="{StaticResource SectionLabel}" Text="EDITOR COMMAND" Margin="1,14,0,6"/>
+                    <TextBox x:Name="EditorBox"/>
+                    <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="Used by 'Open in editor' and conflict files, e.g. code, rider64, notepad++."/>
+
+                    <TextBlock Style="{StaticResource SectionLabel}" Text="EXTRA GITLAB SERVERS" Margin="1,14,0,6"/>
+                    <TextBox x:Name="HostsBox"/>
+                    <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="Comma separated. Only needed for GitLab servers whose name doesn't contain 'gitlab'."/>
+
+                    <CheckBox x:Name="NotifyBox" Content="Notify me when a pipeline / workflow finishes or a merge / pull request is merged" Margin="0,14,0,0"/>
+                    <CheckBox x:Name="TrayBox" Content="Minimize to the tray (the tray icon's dot shows overall status; right-click it for actions)" Margin="0,8,0,0"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- ===================== GLOBAL IDENTITY -->
+            <TabItem Header="Global git identity">
+                <StackPanel Margin="0,8,0,0">
+                    <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,0,0,10"
+                               Text="Used by any repo that doesn't set its own. Repos get their own identity from their profile when you clone them, or with 'Use profile identity'. git config --global user.name / user.email."/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="NAME"/>
+                            <TextBox x:Name="NameBox"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Style="{StaticResource SectionLabel}" Text="EMAIL"/>
+                            <TextBox x:Name="EmailBox"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+
+            <!-- ===================== MIGRATE -->
+            <TabItem Header="Export / migrate">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap"
+                               Text="Saves one JSON file to take to another computer: every repo with its folder, remote URLs, branches, profile and identity, plus these settings, your global git config, the servers you have accounts on and your SSH key / host alias names. It also lists the work that only exists on this computer (uncommitted changes, stashes, unpushed or local-only branches) so you can push it before you move."/>
+                    <TextBlock Grid.Row="1" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Text="Not included: access tokens (they only work on this PC - add them again under Accounts), SSH private keys (copy ~/.ssh yourself) and passwords in remote URLs (masked). Uses the settings as last saved."/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0">
+                        <Button x:Name="ExportButton" Content="Export repos and settings..." Style="{StaticResource Button.Primary}" MinWidth="200" Click="Export_Click"/>
+                        <Button x:Name="OpenExportFolderButton" Content="Show file" Margin="8,0,0,0" MinWidth="90" Visibility="Collapsed" Click="OpenExportFolder_Click"/>
+                        <Button Content="Import from a file..." Margin="8,0,0,0" MinWidth="150" Click="Import_Click"
+                                ToolTip="On the new computer: clone the repos that aren't here yet and choose which settings to take. Closes this window; changes not saved here are discarded."/>
+                        <TextBlock x:Name="ExportStatus" Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Margin="12,0,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <TextBox x:Name="ExportWarnings" Grid.Row="3" Margin="0,12,0,0" IsReadOnly="True" TextWrapping="NoWrap" AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="{StaticResource Font.Mono}"
+                             Visibility="Collapsed" MaxHeight="300" VerticalContentAlignment="Top"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+            <Button Content="Save" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="90" Click="Save_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

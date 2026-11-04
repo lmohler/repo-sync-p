@@ -1,0 +1,39 @@
+<Window x:Class="RepoSyncV3.Views.ReflogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="860" Height="560" Title="Undo / recover">
+    <Grid Margin="14,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,8">
+            <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Undo / recover (reflog)"/>
+            <TextBlock Style="{StaticResource Text.Muted}" Margin="0,3,0,0" TextWrapping="Wrap"
+                       Text="Every place HEAD has been: commits, resets, rebases, checkouts. Pick the point before the mistake. 'Go back here' keeps your uncommitted changes (git reset --keep)."/>
+        </StackPanel>
+        <DataGrid x:Name="Grid" Grid.Row="1" Style="{StaticResource Grid.List}" AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" SelectionMode="Single" MouseDoubleClick="Grid_MouseDoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Hash" Binding="{Binding ShortHash}" Width="75">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Ref" Binding="{Binding Selector}" Width="80"/>
+                <DataGridTextColumn Header="What happened" Binding="{Binding Action}" Width="*"/>
+                <DataGridTextColumn Header="When" Binding="{Binding When}" Width="120"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="App undo history..." Click="History_Click" Margin="0,0,8,0" ToolTip="The git actions this app ran, each with its own Undo"/>
+            <Button Content="Branch from here..." Click="Branch_Click" Margin="0,0,8,0"/>
+            <Button Content="Go back here" Style="{StaticResource Button.Primary}" Click="Reset_Click" Margin="0,0,8,0"/>
+            <Button Content="Close" IsCancel="True" MinWidth="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,820 @@
+﻿<Window x:Class="RepoSyncV3.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:RepoSyncV3.Views"
+        xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+        xmlns:m="clr-namespace:RepoSyncV3.Models"
+        xmlns:tabs="clr-namespace:RepoSyncV3.Views.Tabs"
+        x:Name="Root"
+        Title="{Binding WindowTitle}" Width="1480" Height="900" MinWidth="1000" MinHeight="620"
+        Background="{DynamicResource Brush.WindowBackground}" Foreground="{DynamicResource Brush.TextPrimary}"
+        FontFamily="Segoe UI" Icon="pack://application:,,,/repo-sync-v3;component/app.ico" WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshAllCommand}"/>
+        <KeyBinding Key="F5" Modifiers="Shift" Command="{Binding FetchAllCommand}"/>
+        <KeyBinding Key="D0" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="0"/>
+        <KeyBinding Key="D1" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="1"/>
+        <KeyBinding Key="D2" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="2"/>
+        <KeyBinding Key="D3" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="3"/>
+        <KeyBinding Key="D4" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="4"/>
+        <KeyBinding Key="D5" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="5"/>
+        <KeyBinding Key="D6" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="6"/>
+        <KeyBinding Key="D7" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="7"/>
+        <KeyBinding Key="D8" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="8"/>
+        <KeyBinding Key="D9" Modifiers="Control" Command="{Binding SelectProfileNumberCommand}" CommandParameter="9"/>
+        <KeyBinding Key="Home" Modifiers="Alt" Command="{Binding HomeCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding CancelRepoCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoLastActionCommand}"/>
+        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{Binding SearchReposCommand}"/>
+        <!-- Alt+1..9 = the repo tabs in order, Alt+0 = SVN -->
+        <KeyBinding Key="D1" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="0"/>
+        <KeyBinding Key="D2" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="1"/>
+        <KeyBinding Key="D3" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="2"/>
+        <KeyBinding Key="D4" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="3"/>
+        <KeyBinding Key="D5" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="4"/>
+        <KeyBinding Key="D6" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="5"/>
+        <KeyBinding Key="D7" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="6"/>
+        <KeyBinding Key="D8" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="7"/>
+        <KeyBinding Key="D9" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="8"/>
+        <KeyBinding Key="D0" Modifiers="Alt" Command="{Binding Detail.GoToTabCommand}" CommandParameter="9"/>
+    </Window.InputBindings>
+
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition x:Name="LogSplitRow" Height="Auto"/>
+            <RowDefinition x:Name="LogRow" Height="170"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ================================================================== header -->
+        <Border Background="{DynamicResource Brush.PanelBackground}" BorderBrush="{DynamicResource Brush.Divider}" BorderThickness="0,0,0,1" Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Style="{StaticResource Button.Ghost}" Command="{Binding HomeCommand}" Padding="4,2" ToolTip="Home: what needs you across every repo (Alt+Home)">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="30" Height="30" CornerRadius="7" Background="{DynamicResource Brush.Accent}" Margin="0,0,10,0">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE80F;" FontSize="15" Foreground="{DynamicResource Brush.AccentForeground}" HorizontalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Repo Sync" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                            <TextBlock Text="GitHub + GitLab" Style="{StaticResource Text.Muted}" FontSize="11"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- current workspace + only the counts that need action (the sidebar chips carry the rest): click one to filter the list -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="22,0,0,0">
+                    <Border CornerRadius="9" Padding="9,2,9,3" Margin="0,0,6,0" VerticalAlignment="Center" Background="{Binding ScopeBrush}"
+                            ToolTip="The counts and the bulk actions (Fetch / Pull / Push all) cover the loaded profile. Switch it at the top of the list.">
+                        <TextBlock Text="{Binding ScopeName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    </Border>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0"
+                                Visibility="{Binding AllClear, Converter={StaticResource Vis}}">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE73E;" Foreground="{DynamicResource Brush.Status.Clean}" Margin="0,0,6,0"/>
+                        <TextBlock Text="Nothing needs you" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Style="{StaticResource Button.Ghost}" Command="{Binding SetFilterCommand}" CommandParameter="attention" ToolTip="Conflicts, behind the server, failed pipelines, merged MRs to finish"
+                            Visibility="{Binding AttentionCount, Converter={StaticResource Vis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" Foreground="{DynamicResource Brush.Status.Conflict}" Margin="0,0,5,0"/>
+                            <TextBlock Text="{Binding AttentionCount}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Conflict}" Margin="0,0,5,0"/>
+                            <TextBlock Text="need you" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Button.Ghost}" Command="{Binding SetFilterCommand}" CommandParameter="failing" ToolTip="Latest pipeline failed"
+                            Visibility="{Binding FailingCount, Converter={StaticResource Vis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="failed" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding FailingCount}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Conflict}" Margin="0,0,5,0"/>
+                            <TextBlock Text="failing" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Button.Ghost}" Command="{Binding SetFilterCommand}" CommandParameter="identity" ToolTip="Repos whose git email doesn't match their profile"
+                            Visibility="{Binding IdentityCount, Converter={StaticResource Vis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE77B;" Foreground="{DynamicResource Brush.Status.Conflict}" Margin="0,0,5,0"/>
+                            <TextBlock Text="{Binding IdentityCount}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Status.Conflict}" Margin="0,0,5,0"/>
+                            <TextBlock Text="wrong identity" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- adding repos is rare after setup: Clone / Add / Scan / SVN share one button -->
+                    <Button x:Name="AddRepoMenuButton" Style="{StaticResource Tool}" Tag="&#xE710;" Content="Add repo" Click="AddRepoMenu_Click"
+                            ToolTip="Clone, add a folder, scan a folder, or set up an SVN repo" AutomationProperties.Name="Add repo">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Clone from GitHub / GitLab..." Command="{Binding CloneCommand}" ToolTip="Clone one of your GitHub or GitLab projects"/>
+                                <MenuItem Header="Add existing folder(s)..." Command="{Binding AddRepoCommand}" ToolTip="Add repo folders that are already on this computer"/>
+                                <MenuItem Header="Scan a folder for repos..." Command="{Binding ScanFolderCommand}" ToolTip="Find every repo under a folder and pick which to add"/>
+                                <Separator/>
+                                <MenuItem Header="Add SVN repo..." Command="{Binding AddSvnRepoCommand}"
+                                          ToolTip="Check out an SVN repo, mirror it in git 'main', and give your work branch its own folder"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Border Width="1" Background="{DynamicResource Brush.Divider}" Margin="6,4,12,4"/>
+                    <Button views:ShortcutTip.Id="refresh-all" Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Refresh" Command="{Binding RefreshAllCommand}" ToolTip="Re-read every repo in this profile and its server (F5)"/>
+                    <Button views:ShortcutTip.Id="fetch-all" Style="{StaticResource Tool}" Tag="&#xE896;" Content="Fetch all" Command="{Binding FetchAllCommand}" ToolTip="Ask the server for news on every repo in this profile (Shift+F5)"/>
+                    <Button views:ShortcutTip.Id="pull-all" Style="{StaticResource Tool}" Tag="&#xE895;" Content="Pull all" Command="{Binding PullAllCommand}" ToolTip="Fast-forward every repo in this profile that can be updated safely"/>
+                    <Button views:ShortcutTip.Id="commit-all" Style="{StaticResource Tool}" Tag="&#xE73E;" Content="Commit all" Command="{Binding CommitAllCommand}" ToolTip="Commit every repo in this profile that has changes (you review the list and messages first)"/>
+                    <Button views:ShortcutTip.Id="push-all" Style="{StaticResource Tool}" Tag="&#xE898;" Content="Push all" Command="{Binding PushAllCommand}" ToolTip="Push every repo in this profile whose commits can go straight to the server"/>
+                    <Border Width="1" Background="{DynamicResource Brush.Divider}" Margin="6,4,12,4"/>
+                    <Button Style="{StaticResource IconOnly}" Content="&#xE8D7;" Command="{Binding TokenCommand}" AutomationProperties.Name="Accounts (GitHub / GitLab tokens)" ToolTip="Accounts (GitHub / GitLab tokens)" FontSize="15"/>
+                    <Button Style="{StaticResource IconOnly}" Content="&#xE713;" Command="{Binding SettingsCommand}" AutomationProperties.Name="Settings" ToolTip="Settings" FontSize="15"/>
+                    <Button Style="{StaticResource IconOnly}" Content="&#xE706;" Command="{Binding ToggleThemeCommand}" AutomationProperties.Name="Light / dark" ToolTip="Light / dark" FontSize="15"/>
+                    <Button Style="{StaticResource IconOnly}" Content="&#xE897;" Click="Shortcuts_Click" AutomationProperties.Name="Keyboard shortcuts (F1)" ToolTip="Keyboard shortcuts (F1)" FontSize="15"/>
+                    <Button Style="{StaticResource IconOnly}" Content="&#xE8A4;" Command="{Binding ToggleLogCommand}" AutomationProperties.Name="Show / hide the activity log" ToolTip="Show / hide the activity log" FontSize="15"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================================================================== body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340" MinWidth="260" MaxWidth="560"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ============================== sidebar -->
+            <Border Background="{DynamicResource Brush.SidebarBackground}">
+                <Grid Margin="8,8,4,6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- profile picker: only the picked profile's repos are loaded (or every profile with "All profiles") -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding ProfileChoices}" SelectedValuePath="Id" SelectedValue="{Binding ActiveWorkspace}"
+                                  Padding="9,5" ToolTip="Profile (Ctrl+0 all, Ctrl+1..9 by position)" AutomationProperties.Name="Profile">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="9" Height="9" Fill="{Binding Brush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Style="{StaticResource Text.Muted}" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <Run Text="{Binding CountText, Mode=OneWay}"/><Run Text="  "/><Run Text="{Binding Shortcut, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="1" Style="{StaticResource Button.Ghost}" Margin="4,0,0,0" Padding="7,4" Command="{Binding ManageProfilesCommand}"
+                                ToolTip="Add, rename or remove profiles" AutomationProperties.Name="Manage profiles">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE713;"/>
+                        </Button>
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <TextBox x:Name="SearchBox" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Padding="28,5,8,5"/>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE721;" Foreground="{DynamicResource Brush.TextSecondary}" Margin="10,0,0,0" IsHitTestVisible="False"/>
+                        <TextBlock Text="Filter repos (Ctrl+F) · search inside them: Ctrl+Shift+F" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.TextSecondary}" Margin="30,0,0,0" VerticalAlignment="Center"
+                                   IsHitTestVisible="False" Visibility="{Binding Search, Converter={StaticResource Vis}, ConverterParameter=invert}"/>
+                    </Grid>
+                    <!-- filter chips carry their counts; a chip with nothing to show is dimmed -->
+                    <WrapPanel Grid.Row="2" Margin="0,10,0,4">
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding TotalCount}"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=all}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="All" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding TotalCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding PinnedCount}" ToolTip="Show only pinned repos"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=pinned}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE718;" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Pinned" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding PinnedCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding AttentionCount}" ToolTip="Conflicts, behind the server, failed pipelines, merged MRs to finish"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=attention}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Needs me" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding AttentionCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Status.Conflict}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding ChangesCount}" ToolTip="Repos with uncommitted changes"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=changes}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Changes" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ChangesCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding UnpushedCount}" ToolTip="Repos with commits not on the server"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=unpushed}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="To push" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding UnpushedCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding BranchCount}" ToolTip="Repos on a feature branch"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=branches}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="On a branch" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding BranchCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding FailingCount}" ToolTip="Latest pipeline failed"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=failing}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Failing" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding FailingCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Status.Conflict}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource Chip.Count}" GroupName="filter" Tag="{Binding IdentityCount}" ToolTip="Git email doesn't match the repo's profile"
+                                     Visibility="{Binding IdentityCount, Converter={StaticResource Vis}}"
+                                     IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=identity}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Wrong identity" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding IdentityCount}" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Status.Conflict}"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </WrapPanel>
+
+                    <ListBox x:Name="RepoList" Grid.Row="3" ItemsSource="{Binding ReposView}" SelectedItem="{Binding SelectedRepo}" Margin="0,4,0,0" SelectionMode="Extended">
+                        <ListBox.ContextMenu>
+                            <ContextMenu Opened="RepoMenu_Opened">
+                                <MenuItem Header="Fetch selected" Command="{Binding FetchSelectedCommand}" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Pull selected (fast-forward only)" Command="{Binding PullSelectedCommand}" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Commit selected..." Command="{Binding CommitSelectedCommand}" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Push selected" Command="{Binding PushSelectedCommand}" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <Separator/>
+                                <MenuItem Header="Pin / Unpin" Command="{Binding PinRepoCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Watch / Unwatch (background fetch)" Command="{Binding WatchRepoCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Edit .gitignore..." Command="{Binding EditGitIgnoreCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <Separator/>
+                                <MenuItem Header="Open in File Explorer" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Open in Terminal" Command="{Binding OpenTerminalCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Open in Editor" Command="{Binding OpenEditorCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Open on Web" Command="{Binding OpenWebCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <Separator/>
+                                <MenuItem x:Name="MoveToProfileMenu" Header="Move to profile"/>
+                                <MenuItem Header="Repo settings..." Command="{Binding RepoSettingsCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                <MenuItem Header="Remove from RepoSync" Command="{Binding RemoveRepoCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                        <ListBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="GroupItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="GroupItem">
+                                                    <Expander IsExpanded="True" Margin="0,0,0,4" Padding="0">
+                                                        <Expander.Template>
+                                                            <ControlTemplate TargetType="Expander">
+                                                                <StackPanel>
+                                                                    <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Cursor="Hand"
+                                                                                  Focusable="False" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch">
+                                                                        <ToggleButton.Template>
+                                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                                <Border Background="Transparent" Padding="4,3,8,3">
+                                                                                    <ContentPresenter/>
+                                                                                </Border>
+                                                                            </ControlTemplate>
+                                                                        </ToggleButton.Template>
+                                                                        <Grid DataContext="{Binding Items[0]}">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Border Width="4" Height="16" CornerRadius="2" Background="{Binding WorkspaceBrush}" Margin="0,0,8,0"/>
+                                                                            <TextBlock Grid.Column="1" Text="{Binding WorkspaceName}" FontWeight="Bold" FontSize="12" Foreground="{Binding WorkspaceBrush}"
+                                                                                       VerticalAlignment="Center"/>
+                                                                            <TextBlock Grid.Column="2" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"
+                                                                                       Text="{Binding DataContext.ItemCount, RelativeSource={RelativeSource AncestorType=GroupItem}}"/>
+                                                                        </Grid>
+                                                                    </ToggleButton>
+                                                                    <ContentPresenter x:Name="Body" Visibility="Collapsed"/>
+                                                                </StackPanel>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsExpanded" Value="True">
+                                                                        <Setter TargetName="Body" Property="Visibility" Value="Visible"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Expander.Template>
+                                                        <ItemsPresenter/>
+                                                    </Expander>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                            </GroupStyle>
+                        </ListBox.GroupStyle>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <EventSetter Event="PreviewMouseRightButtonDown" Handler="RepoListItem_PreviewMouseRightButtonDown"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="{DynamicResource Density.CardMargin}"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+                                <Setter Property="Background" Value="{DynamicResource Brush.PanelBackground}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.PanelBorder}"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <!-- SelRing turns accent when selected: a 2px edge with no layout shift -->
+                                            <Border x:Name="SelRing" BorderThickness="1" BorderBrush="Transparent" CornerRadius="7" SnapsToDevicePixels="True">
+                                                <Border x:Name="CardBorder"
+                                                        Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6"
+                                                        Padding="{TemplateBinding Padding}"
+                                                        SnapsToDevicePixels="True"
+                                                        TextElement.Foreground="{TemplateBinding Foreground}">
+                                                    <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}"/>
+                                                </Border>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource Brush.CardHover}"/>
+                                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource Brush.ButtonSecondaryBorder}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="SelRing" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                                    <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource Brush.DataGridSelected}"/>
+                                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="vm:RepoViewModel">
+                                <Grid>
+                                    <Grid.ToolTip>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Path}"/>
+                                            <TextBlock Text="{Binding WorkspaceLabel}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid.ToolTip>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Style="{StaticResource StateStripe}" Width="4" CornerRadius="2" Margin="5,6,0,6" VerticalAlignment="Stretch"/>
+                                    <!-- monogram: a per-repo color + letters so a card can be spotted before its name is read -->
+                                    <Border Grid.Column="1" Width="{DynamicResource Density.Avatar}" Height="{DynamicResource Density.Avatar}" CornerRadius="7"
+                                            Margin="{DynamicResource Density.AvatarMargin}" VerticalAlignment="Top" Background="{Binding MonogramBrush}">
+                                        <TextBlock Text="{Binding Monogram}" Foreground="White" FontSize="12.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" Margin="{DynamicResource Density.CardContent}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <DockPanel Margin="0,0,8,0">
+                                                <TextBlock Style="{StaticResource Icon}" Text="&#xE718;" FontSize="11" Margin="0,2,5,0" Foreground="{DynamicResource Brush.Accent}"
+                                                           DockPanel.Dock="Left" ToolTip="Pinned repository"
+                                                           Visibility="{Binding Pinned, Converter={StaticResource Vis}}"/>
+                                                <TextBlock Style="{StaticResource Icon}" Text="&#xE7B3;" FontSize="11" Margin="0,2,5,0" Foreground="{DynamicResource Brush.TextSecondary}"
+                                                           DockPanel.Dock="Left" ToolTip="Watched: included in background fetch"
+                                                           Visibility="{Binding Watched, Converter={StaticResource Vis}}"/>
+                                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource Brush.TextPrimary}" FontWeight="Bold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                            <Grid Grid.Column="1">
+                                                <ProgressBar IsIndeterminate="True" Width="40" Height="4" Visibility="{Binding IsBusy, Converter={StaticResource Vis}}"/>
+                                                <Border Style="{StaticResource StatePill}" CornerRadius="8" Padding="7,1,7,2"
+                                                        Visibility="{Binding IsBusy, Converter={StaticResource Vis}, ConverterParameter=invert}">
+                                                    <TextBlock Text="{Binding StateLabel}" FontSize="11" FontWeight="SemiBold"/>
+                                                </Border>
+                                            </Grid>
+                                        </Grid>
+                                        <WrapPanel Margin="0,3,0,0">
+                                            <!-- workspace + server are in the group header and the tooltip; a dot is enough here -->
+                                            <Ellipse Width="7" Height="7" Fill="{Binding WorkspaceBrush}" Margin="0,0,6,3" VerticalAlignment="Center" ToolTip="{Binding WorkspaceLabel}"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,8,3" VerticalAlignment="Center" Visibility="{Binding Branch, Converter={StaticResource Vis}}">
+                                                <TextBlock Style="{StaticResource Icon}" Text="&#xE8AB;" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,0,5,0"/>
+                                                <TextBlock Text="{Binding Branch}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}"
+                                                           TextTrimming="CharacterEllipsis" MaxWidth="170"/>
+                                            </StackPanel>
+                                            <Border Style="{StaticResource Pill}" Tag="info" Margin="0,0,5,3" Visibility="{Binding IsSvn, Converter={StaticResource Vis}}"
+                                                    ToolTip="SVN working copy (git main mirrors SVN) or its work folder - see the SVN tab">
+                                                <TextBlock Text="SVN"/>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill}" Tag="purple" Margin="0,0,5,3" Visibility="{Binding IsWorktree, Converter={StaticResource Vis}}" ToolTip="{Binding WorktreeOf}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE8B7;" FontSize="9" Margin="0,0,3,0"/>
+                                                    <TextBlock Text="{Binding WorktreeBadge}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill}" Tag="error" Margin="0,0,5,3" Visibility="{Binding IdentityMismatch, Converter={StaticResource Vis}}" ToolTip="{Binding IdentityProblem}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE77B;" FontSize="9" Margin="0,0,3,0"/>
+                                                    <TextBlock Text="identity"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill}" Tag="info" Margin="0,0,5,3" Visibility="{Binding Ahead, Converter={StaticResource Vis}}" ToolTip="Commits to push">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE74A;" FontSize="9" Margin="0,0,3,0"/>
+                                                    <TextBlock Text="{Binding Ahead}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill}" Tag="purple" Margin="0,0,5,3" Visibility="{Binding Behind, Converter={StaticResource Vis}}" ToolTip="Commits to pull">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE74B;" FontSize="9" Margin="0,0,3,0"/>
+                                                    <TextBlock Text="{Binding Behind}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill}" Tag="warning" Margin="0,0,5,3" Visibility="{Binding ChangeCount, Converter={StaticResource Vis}}" ToolTip="Uncommitted changes">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE70F;" FontSize="9" Margin="0,0,3,0"/>
+                                                    <TextBlock Text="{Binding ChangeCount}"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill.MergeRequest}" Tag="{Binding MrKind}" Margin="0,0,5,3" Visibility="{Binding HasMergeRequest, Converter={StaticResource Vis}}"
+                                                    ToolTip="{Binding MergeRequest.Title}">
+                                                <TextBlock Text="{Binding MrBadge}"/>
+                                            </Border>
+                                            <Border Style="{StaticResource Pill.Pipeline}" Tag="{Binding PipelineKind}" Margin="0,0,5,3" Visibility="{Binding HasPipeline, Converter={StaticResource Vis}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="{Binding PipelineKind}" Width="7" Height="7" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding PipelineLabel}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- empty list -->
+                    <StackPanel Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Visibility="{Binding TotalCount, Converter={StaticResource Vis}, ConverterParameter=invert}">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE8B7;" FontSize="34" HorizontalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                        <TextBlock Text="{Binding ScopeName, StringFormat='No repos in {0} yet'}" Style="{StaticResource Text.Heading}" HorizontalAlignment="Center" Margin="0,10,0,4"/>
+                        <TextBlock Text="Clone a GitHub or GitLab project, or add folders you already have. They go into this profile." Style="{StaticResource Text.Muted}" HorizontalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
+                            <Button Content="Clone" Style="{StaticResource Button.Primary}" Command="{Binding CloneCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Add a folder" Command="{Binding AddRepoCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Scan a folder" Command="{Binding ScanFolderCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"
+                          BorderBrush="{DynamicResource Brush.Divider}" BorderThickness="1,0,0,0"/>
+
+            <!-- ============================== detail -->
+            <Grid Grid.Column="2" Margin="12,8,12,6">
+                <!-- ============================== home: nothing selected -->
+                <tabs:HomeView/>
+                <tabs:WorkspaceOverviewView/>
+
+                <Grid DataContext="{Binding Detail}" Visibility="{Binding DataContext.HasSelection, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Vis}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- repo header -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Repo.Name}" Style="{StaticResource Text.Title}"/>
+                                <Border Style="{StaticResource StatePill}" DataContext="{Binding Repo}" CornerRadius="9" Padding="9,2,9,3" Margin="12,4,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding StateLabel}" FontSize="12" FontWeight="SemiBold"/>
+                                </Border>
+                                <Button Margin="6,4,0,0" VerticalAlignment="Center" Cursor="Hand" ToolTip="Profile and server - click to change the profile or git identity"
+                                        Command="{Binding DataContext.RepoSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border CornerRadius="9" Padding="9,2,9,3" Background="{Binding Repo.WorkspaceTint}" BorderBrush="{Binding Repo.WorkspaceBrush}" BorderThickness="1">
+                                                <TextBlock Text="{Binding Repo.WorkspaceLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding Repo.WorkspaceBrush}"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <ProgressBar IsIndeterminate="True" Width="80" Height="4" Margin="12,4,0,0" VerticalAlignment="Center"
+                                             Visibility="{Binding Repo.IsBusy, Converter={StaticResource Vis}}"/>
+                                <TextBlock Text="{Binding Repo.BusyText}" Style="{StaticResource Text.Muted}" Margin="8,4,0,0" VerticalAlignment="Center"/>
+                                <Button Style="{StaticResource Button.Link}" Content="Cancel" Margin="8,4,0,0" VerticalAlignment="Center"
+                                        ToolTip="Stop the running git command (Esc)" AutomationProperties.Name="Cancel the running action"
+                                        Visibility="{Binding Repo.IsBusy, Converter={StaticResource Vis}}"
+                                        Command="{Binding DataContext.CancelRepoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Repo}"/>
+                            </StackPanel>
+                            <!-- a long branch name trims instead of being clipped under the header buttons -->
+                            <DockPanel Margin="0,6,0,0" Background="Transparent" ToolTip="{Binding Repo.Branch}">
+                                <TextBlock DockPanel.Dock="Left" Style="{StaticResource Icon}" Text="&#xE8AB;" Foreground="{DynamicResource Brush.Accent}" Margin="0,0,6,0"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Repo.LastFetchText}" Style="{StaticResource Text.Muted}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Repo.TrackingText}" Style="{StaticResource Text.Muted}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Repo.Branch}" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                            <TextBlock Text="{Binding Repo.Path}" Style="{StaticResource Text.Muted}" FontSize="11" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Repo.Path}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Style="{StaticResource Icon}" Text="&#xE77B;" FontSize="11" Margin="0,0,5,0" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                <TextBlock Style="{StaticResource Text.Muted}" FontSize="11">
+                                    <Run Text="commits as "/><Run Text="{Binding Repo.IdentityText, Mode=OneWay}"/>
+                                </TextBlock>
+                                <Border Style="{StaticResource Pill}" Tag="error" Margin="8,0,0,0" Visibility="{Binding Repo.IdentityMismatch, Converter={StaticResource Vis}}"
+                                        ToolTip="{Binding Repo.IdentityProblem}">
+                                    <TextBlock Text="wrong for this profile"/>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                            <Button views:ShortcutTip.Id="home" Style="{StaticResource Tool.Ghost}" Tag="&#xE80F;" Content="Home" Command="{Binding DataContext.HomeCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Back to the overview of every repo (Alt+Home)"/>
+                            <Button views:ShortcutTip.Id="open-folder" Style="{StaticResource Tool.Ghost}" Tag="&#xE838;" Content="Folder" Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Open in Explorer"/>
+                            <Button views:ShortcutTip.Id="open-editor" Style="{StaticResource Tool.Ghost}" Tag="&#xE943;" Content="Editor" Command="{Binding DataContext.OpenEditorCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Open in your editor"/>
+                            <Button views:ShortcutTip.Id="open-web" Style="{StaticResource Tool.Ghost}" Tag="&#xE8A7;" Content="{Binding Repo.ServerName}" Command="{Binding DataContext.OpenWebCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Open this branch on the web"/>
+                            <!-- the less-used repo actions, labeled, behind one button (Popup content binds the window by ElementName) -->
+                            <!-- not hit-testable while open, so the click that closes the popup doesn't toggle it straight back open -->
+                            <ToggleButton x:Name="RepoMoreToggle" Style="{StaticResource MoreToggle}" ToolTip="More repo actions"
+                                          IsHitTestVisible="{Binding IsOpen, ElementName=RepoMorePopup, Converter={StaticResource Not}}"/>
+                            <Popup x:Name="RepoMorePopup" IsOpen="{Binding IsChecked, ElementName=RepoMoreToggle}" PlacementTarget="{Binding ElementName=RepoMoreToggle}" Placement="Bottom"
+                                   HorizontalOffset="-150" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                                <Border Background="{DynamicResource Brush.PanelBackground}" BorderBrush="{DynamicResource Brush.PanelBorder}" BorderThickness="1"
+                                        CornerRadius="8" Padding="4" Margin="0,4,0,0" MinWidth="200" ButtonBase.Click="RepoMoreMenu_Click">
+                                    <StackPanel>
+                                        <StackPanel.Resources>
+                                            <Style TargetType="Button" BasedOn="{StaticResource Tool.Ghost}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                                <Setter Property="Margin" Value="0"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+                                            </Style>
+                                        </StackPanel.Resources>
+                                        <TextBlock Style="{StaticResource SectionLabel}" Text="IN THE LIST" Margin="10,6,10,2"/>
+                                        <Button Tag="&#xE718;" Content="Pin / unpin" Command="{Binding DataContext.PinRepoCommand, ElementName=Root}" ToolTip="Keep this repo at the top of the list"/>
+                                        <Button Tag="&#xE7B3;" Content="Watch / unwatch" Command="{Binding DataContext.WatchRepoCommand, ElementName=Root}" ToolTip="Include this repo in background fetch"/>
+                                        <Button Tag="&#xE713;" Content="Repo settings..." Command="{Binding DataContext.RepoSettingsCommand, ElementName=Root}" ToolTip="Name in the list, profile, git identity"/>
+                                        <Border Height="1" Background="{DynamicResource Brush.Divider}" Margin="6,4"/>
+                                        <TextBlock Style="{StaticResource SectionLabel}" Text="TOOLS" Margin="10,6,10,2"/>
+                                        <Button Tag="&#xE8EC;" Content="Tags" Command="{Binding GoToTabCommand}" CommandParameter="7" ToolTip="Create, push and delete tags (Alt+8)"/>
+                                        <Button Tag="&#xE8B7;" Content="Worktrees" Command="{Binding GoToTabCommand}" CommandParameter="8" ToolTip="Check out another branch in a second folder (Alt+9)"/>
+                                        <Button Tag="&#xE8A5;" Content="Edit .gitignore..." Command="{Binding DataContext.EditGitIgnoreCommand, ElementName=Root}"/>
+                                        <Button Tag="&#xE968;" Content="Remotes and submodules..." Command="{Binding RemotesCommand}"/>
+                                        <Button Tag="&#xE95E;" Content="Repo health..." Command="{Binding HealthCommand}" ToolTip="Size, branches to clean up, big files, old stashes"/>
+                                        <Border Height="1" Background="{DynamicResource Brush.Divider}" Margin="6,4"/>
+                                        <TextBlock Style="{StaticResource SectionLabel}" Text="UNDO AND RECOVERY" Margin="10,6,10,2"/>
+                                        <Button Tag="&#xE7A7;" Content="Undo history..." Command="{Binding DataContext.UndoHistoryCommand, ElementName=Root}" ToolTip="Every git action this app ran, each with its own Undo"/>
+                                        <Button Tag="&#xE81C;" Content="Recover (reflog)..." Command="{Binding RecoverCommand}" ToolTip="Undo a reset, rebase, amend or deleted commit"/>
+                                        <Border Height="1" Background="{DynamicResource Brush.Divider}" Margin="6,4"/>
+                                        <Button Tag="&#xE74D;" Content="Remove from list" Command="{Binding DataContext.RemoveRepoCommand, ElementName=Root}" ToolTip="Keeps the folder on disk"/>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- action bar -->
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Padding="6,4" Margin="0,6,0,0">
+                        <WrapPanel>
+                            <Button views:ShortcutTip.Id="fetch" Style="{StaticResource Tool}" Tag="&#xE896;" Content="Fetch" Command="{Binding DataContext.FetchCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Check the server for new commits (changes nothing locally)"/>
+                            <Button views:ShortcutTip.Id="pull" Style="{StaticResource Tool.Step}" Uid="pull" Tag="&#xE74B;" Content="{Binding Repo.PullText}" Command="{Binding DataContext.PullCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Bring in the server's new commits (your uncommitted work is kept)"/>
+                            <Button views:ShortcutTip.Id="push" Style="{StaticResource Tool.Step}" Uid="push" Tag="&#xE74A;" Content="{Binding Repo.PushText}" Command="{Binding DataContext.PushCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Send your commits (publishes a new branch)"/>
+                            <Button views:ShortcutTip.Id="sync" Style="{StaticResource Tool.Step}" Uid="sync" Tag="&#xE895;" Content="Pull &amp; push" Command="{Binding DataContext.SyncCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <Border Width="1" Background="{DynamicResource Brush.Divider}" Margin="6,4,12,4"/>
+                            <Button views:ShortcutTip.Id="start-branch" Style="{StaticResource Tool.Step}" Uid="start-branch" Tag="&#xE710;" Content="Start branch" Command="{Binding DataContext.StartBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="New feature branch from the latest default branch"/>
+                            <Button views:ShortcutTip.Id="switch-branch" Style="{StaticResource Tool}" Tag="&#xE8AB;" Content="Switch" Command="{Binding GoToTabCommand}" CommandParameter="2" ToolTip="Branches tab"/>
+                            <Button views:ShortcutTip.Id="update" Style="{StaticResource Tool.Step}" Uid="update" Tag="&#xE896;" Content="{Binding Repo.UpdateText}" Command="{Binding DataContext.UpdateFromDefaultCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Merge the latest default branch into this branch"/>
+                            <Button views:ShortcutTip.Id="create-mr" Style="{StaticResource Tool}" Tag="&#xE8BD;" Content="{Binding Repo.CreateMrText}" Command="{Binding DataContext.CreateMergeRequestCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="Create a merge request (GitLab) / pull request (GitHub) for this branch"/>
+                            <Button views:ShortcutTip.Id="finish" Style="{StaticResource Tool.Step}" Uid="finish" Tag="&#xE73E;" Content="Finish branch" Command="{Binding DataContext.FinishBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="After the MR is merged: back to the default branch, delete this one"/>
+                        </WrapPanel>
+                    </Border>
+
+                    <!-- banner -->
+                    <Border Grid.Row="2" Style="{StaticResource Pill}" Tag="{Binding DataContext.BannerTone, RelativeSource={RelativeSource AncestorType=Window}}" CornerRadius="8" Padding="10,6" Margin="0,6,0,0"
+                            HorizontalAlignment="Stretch" Visibility="{Binding DataContext.BannerVisible, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Vis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding DataContext.BannerTitle, RelativeSource={RelativeSource AncestorType=Window}}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding DataContext.BannerText, RelativeSource={RelativeSource AncestorType=Window}}" FontSize="12" FontWeight="Normal" TextWrapping="Wrap" Margin="0,3,0,0"
+                                           Visibility="{Binding DataContext.BannerText, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Vis}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Style="{StaticResource Button.Link}" Content="Undo" Margin="0,0,10,0" VerticalAlignment="Center"
+                                        ToolTip="Put the branches back where they were before this action (Ctrl+Z)"
+                                        Visibility="{Binding DataContext.BannerUndoRepo, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Vis}}"
+                                        Command="{Binding DataContext.UndoLastActionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding DataContext.BannerUndoRepo, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                <Button Style="{StaticResource IconOnly}" Content="&#xE711;" AutomationProperties.Name="Dismiss"
+                                        Command="{Binding DataContext.DismissBannerCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- tabs -->
+                    <TabControl Grid.Row="3" Margin="0,8,0,0" SelectedIndex="{Binding SelectedTab}">
+
+                        <!-- ===================== OVERVIEW -->
+                        <TabItem Header="Overview">
+                            <tabs:OverviewTab/>
+                        </TabItem>
+
+                        <!-- ===================== CHANGES -->
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Changes"/>
+                                    <Border Style="{StaticResource Pill}" Tag="warning" Margin="6,0,0,0" Visibility="{Binding Repo.ChangeCount, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="{Binding Repo.ChangeCount}"/>
+                                    </Border>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <tabs:ChangesTab/>
+                        </TabItem>
+
+                        <!-- ===================== BRANCHES -->
+                        <TabItem Header="Branches">
+                            <tabs:BranchesTab/>
+                        </TabItem>
+
+                        <!-- ===================== HISTORY -->
+                        <TabItem Header="History">
+                            <tabs:HistoryTab/>
+                        </TabItem>
+
+                        <!-- ===================== MERGE REQUESTS -->
+                        <TabItem Visibility="{Binding ShowForgeTabs, Converter={StaticResource Vis}}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Repo.MrsTerm}"/>
+                                    <Border Style="{StaticResource Pill.MergeRequest}" Tag="{Binding Repo.MrKind}" Margin="6,0,0,0" Visibility="{Binding Repo.HasMergeRequest, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="{Binding Repo.MergeRequest.Reference}"/>
+                                    </Border>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <tabs:MergeRequestsTab/>
+                        </TabItem>
+
+                        <!-- ===================== PIPELINES -->
+                        <TabItem Visibility="{Binding ShowForgeTabs, Converter={StaticResource Vis}}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Repo.PipelinesTerm}"/>
+                                    <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="{Binding Repo.PipelineKind}" Margin="7,0,0,0" Visibility="{Binding Repo.HasPipeline, Converter={StaticResource Vis}}"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <tabs:PipelinesTab/>
+                        </TabItem>
+
+                        <!-- ===================== STASHES (only when there are some, like Tags / Worktrees) -->
+                        <TabItem Visibility="{Binding ShowStashesTab, Converter={StaticResource Vis}}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Stashes"/>
+                                    <Border Style="{StaticResource Pill}" Margin="6,0,0,0" Visibility="{Binding StashCount, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="{Binding StashCount}"/>
+                                    </Border>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <tabs:StashesTab/>
+                        </TabItem>
+
+                        <!-- ===================== TAGS -->
+                        <TabItem Header="Tags" Visibility="{Binding ShowTagsTab, Converter={StaticResource Vis}}">
+                            <tabs:TagsTab/>
+                        </TabItem>
+
+                        <!-- ===================== WORKTREES -->
+                        <TabItem Visibility="{Binding ShowWorktreesTab, Converter={StaticResource Vis}}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Worktrees"/>
+                                    <Border Style="{StaticResource Pill}" Tag="purple" Margin="6,0,0,0" Visibility="{Binding LinkedWorktreeCount, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="{Binding LinkedWorktreeCount}"/>
+                                    </Border>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <tabs:WorktreesTab/>
+                        </TabItem>
+
+                        <!-- ===================== SVN (only for an SVN working copy and its worktrees) -->
+                        <TabItem Visibility="{Binding Repo.IsSvn, Converter={StaticResource Vis}}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="SVN"/>
+                                    <Border Style="{StaticResource Pill}" Tag="warning" Margin="6,0,0,0" Visibility="{Binding SvnPendingSend, Converter={StaticResource Vis}}"
+                                            ToolTip="A Send is waiting to be committed in SVN">
+                                        <TextBlock Text="sent"/>
+                                    </Border>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <tabs:SvnTab/>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ================================================================== activity log -->
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
+                      Background="{DynamicResource Brush.Divider}" x:Name="LogSplitter"/>
+        <Border Grid.Row="3" x:Name="LogPanel" Background="{DynamicResource Brush.LogBackground}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Margin="14,4,8,0">
+                    <TextBlock Text="ACTIVITY  (every git command the app runs  ·  Ctrl+` quick git)" Style="{StaticResource SectionLabel}" VerticalAlignment="Center" Margin="0"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource Button.Ghost}" Content="Clear" Command="{Binding ClearLogCommand}"/>
+                        <Button Style="{StaticResource Button.Ghost}" Content="Hide" Command="{Binding ToggleLogCommand}"/>
+                    </StackPanel>
+                </Grid>
+                <Grid Grid.Row="1" Margin="14,4,14,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="git" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="1" x:Name="QuickCommandBox" Text="{Binding QuickCommandText, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource Font.Mono}" FontSize="12"
+                             ToolTip="Type any git command (e.g. status, bisect start, clean -fdx, tag -l, remote -v) and press Enter (Ctrl+` to focus)"
+                             PreviewKeyDown="QuickCommandBox_PreviewKeyDown"/>
+                    <Button Grid.Column="2" Content="Run" Margin="6,0,0,0" Style="{StaticResource Button.Primary}" Command="{Binding RunQuickCommand}" ToolTip="Run command in selected repo"/>
+                    <Button Grid.Column="3" Content="Terminal" Margin="6,0,0,0" Style="{StaticResource Button.Ghost}" Click="OpenTerminal_Click" ToolTip="Open PowerShell / Windows Terminal here"/>
+                </Grid>
+                <ListBox x:Name="LogList" Grid.Row="2" ItemsSource="{Binding Log}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Margin="8,0,4,4">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="Padding" Value="4,1"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="m:LogEntry">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Time}" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Message}" Style="{StaticResource LogLine}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- ================================================================== status bar -->
+        <Border Grid.Row="4" Background="{DynamicResource Brush.PanelBackground}" BorderBrush="{DynamicResource Brush.Divider}" BorderThickness="0,1,0,0" Padding="14,4">
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <ProgressBar IsIndeterminate="True" Width="70" Height="4" Margin="0,0,10,0" Visibility="{Binding IsBusy, Converter={StaticResource Vis}}"/>
+                    <TextBlock Text="{Binding StatusText}" Style="{StaticResource Text.Muted}"/>
+                    <!-- errors that went to the hidden Activity log: one click shows it -->
+                    <Button Style="{StaticResource Button.Link}" Margin="12,0,0,0" Padding="2,0" Command="{Binding ToggleLogCommand}"
+                            Visibility="{Binding UnseenErrors, Converter={StaticResource Vis}}" ToolTip="Show the Activity log">
+                        <TextBlock Text="{Binding UnseenErrorsText}" Foreground="{DynamicResource Brush.Status.Conflict}" FontWeight="SemiBold"/>
+                    </Button>
+                </StackPanel>
+                <TextBlock HorizontalAlignment="Right" Style="{StaticResource Text.Muted}">
+                    <Run Text="{Binding AutoFetchText, Mode=OneWay}"/><Run Text="  ·  F5 refresh  ·  Shift+F5 fetch all  ·  Ctrl+0..9 profiles  ·  Ctrl+K commands  ·  "/><Hyperlink Click="Shortcuts_Click" Foreground="{DynamicResource Brush.Accent}">F1 all shortcuts</Hyperlink>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

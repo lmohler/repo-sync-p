@@ -1,0 +1,56 @@
+<Window x:Class="RepoSyncV3.Views.UndoHistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="920" Height="560" ResizeMode="CanResize" Title="Undo history">
+    <Grid Margin="14,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,8">
+            <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Undo history"/>
+            <TextBlock Style="{StaticResource Text.Muted}" Margin="0,3,0,0" TextWrapping="Wrap"
+                       Text="Every git action the app ran since it started, newest first, with the branches it moved. Undo puts HEAD and the local branches back to how they were before that action; uncommitted changes are kept, and commits already on the server are never dropped. For things done outside the app, use the reflog."/>
+        </StackPanel>
+        <DataGrid x:Name="Grid" Grid.Row="1" Style="{StaticResource Grid.List}" AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="When" Binding="{Binding WhenText}" Width="80"/>
+                <DataGridTextColumn Header="Repo" Binding="{Binding RepoName}" Width="140"/>
+                <DataGridTextColumn Header="Action" Binding="{Binding Title}" Width="170"/>
+                <DataGridTextColumn Header="What moved" Binding="{Binding Changes}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                            <Setter Property="FontSize" Value="11.5"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="ToolTip" Value="{Binding Changes}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CanUndo}" Value="False">
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTemplateColumn Header="" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Undo" Padding="10,2" Margin="2" Click="Undo_Click" IsEnabled="{Binding CanUndo}"
+                                    ToolTip="Put the branches back to how they were before this action"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <DockPanel Grid.Row="2" Margin="0,10,0,0">
+            <CheckBox x:Name="ThisRepoOnly" DockPanel.Dock="Left" Content="Only this repo" VerticalAlignment="Center" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+            <CheckBox x:Name="MovedOnly" DockPanel.Dock="Left" Content="Only actions that moved a branch" Margin="14,0,0,0" VerticalAlignment="Center" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Reflog (recover)..." Click="Reflog_Click" Margin="0,0,8,0" ToolTip="Every place HEAD has been, including git run outside the app"/>
+                <Button Content="Close" IsCancel="True" MinWidth="80" Click="Close_Click"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

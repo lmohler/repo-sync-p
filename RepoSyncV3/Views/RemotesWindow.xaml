@@ -1,0 +1,43 @@
+<Window x:Class="RepoSyncV3.Views.RemotesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="760" Title="Remotes and submodules">
+    <StackPanel Margin="14,12">
+        <TextBlock Style="{StaticResource SectionLabel}" Text="REMOTES"/>
+        <DataGrid x:Name="RemoteGrid" Style="{StaticResource Grid.List}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  SelectionMode="Single" Height="150">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="110"/>
+                <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,12">
+            <Button Style="{StaticResource Tool}" Tag="&#xE710;" Content="Add..." Click="AddRemote_Click"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE70F;" Content="Change URL..." Click="EditRemote_Click"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE8AC;" Content="Rename..." Click="RenameRemote_Click"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE74D;" Content="Remove" Click="RemoveRemote_Click"/>
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="SUBMODULES"/>
+        <DataGrid x:Name="SubGrid" Style="{StaticResource Grid.List}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  SelectionMode="Single" Height="150">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*"/>
+                <DataGridTextColumn Header="Commit" Binding="{Binding Commit}" Width="90"/>
+                <DataGridTextColumn Header="State" Binding="{Binding State}" Width="160"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="NoSubs" Style="{StaticResource Text.Muted}" Text="This repo has no submodules." Margin="0,4,0,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <Button Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Init &amp; update all" Click="UpdateSubs_Click"
+                    ToolTip="git submodule update --init --recursive: check out the commit each submodule should be on"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE896;" Content="Pull latest (remote)" Click="RemoteSubs_Click"
+                    ToolTip="git submodule update --remote: move submodules to their branch's newest commit (then commit the change)"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE710;" Content="Add..." Click="AddSub_Click"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Close" IsCancel="True" MinWidth="80"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

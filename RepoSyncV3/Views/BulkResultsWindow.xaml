@@ -1,0 +1,44 @@
+<Window x:Class="RepoSyncV3.Views.BulkResultsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="680" Title="Results">
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="HeadingText" Style="{StaticResource Text.Heading}" FontSize="15" Margin="0,0,0,6"/>
+        <TextBlock x:Name="SummaryText" Grid.Row="1" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+        <!-- one row per repo: outcome pill, name, what happened / why it was skipped; double-click opens the repo -->
+        <ListBox x:Name="RowList" Grid.Row="2" MaxHeight="420" MouseDoubleClick="Row_DoubleClick" AutomationProperties.Name="Results"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="2,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="78"/>
+                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource Pill}" Tag="{Binding Tone}" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <TextBlock Text="{Binding Outcome}"/>
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,1,8,0"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Detail}" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,1,0,0"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Text="Double-click a repo to open it. Details are in the Activity log."/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="RetryButton" Content="Retry failed" Margin="0,0,8,0" MinWidth="100" Click="Retry_Click"/>
+                <Button Content="Close" IsCancel="True" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="80"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

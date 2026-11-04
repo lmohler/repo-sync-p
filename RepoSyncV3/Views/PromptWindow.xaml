@@ -1,0 +1,21 @@
+<Window x:Class="RepoSyncV3.Views.PromptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="480" Title="Confirm">
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="HeadingText" Style="{StaticResource Text.Heading}" FontSize="15" Margin="0,0,0,10"/>
+        <TextBlock x:Name="MessageText" Grid.Row="1" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.TextSecondary}"/>
+        <TextBox x:Name="InputBox" Grid.Row="2" Margin="0,12,0,0" Visibility="Collapsed"/>
+        <ComboBox x:Name="ChoiceBox" Grid.Row="2" Margin="0,12,0,0" Visibility="Collapsed" DisplayMemberPath="Name" AutomationProperties.Name="Choice"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+            <Button x:Name="OkButton" Content="OK" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="90" Click="Ok_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

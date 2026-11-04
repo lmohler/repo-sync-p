@@ -1,0 +1,13 @@
+<!-- Shared value converters. Merged first in App.xaml so templates in the other theme dictionaries can StaticResource them. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:RepoSyncV3.Converters">
+    <c:VisibleWhenConverter x:Key="Vis"/>
+    <c:EqualsConverter x:Key="Equals"/>
+    <c:AllEqualConverter x:Key="AllEqual"/>
+    <c:RelativeTimeConverter x:Key="Ago"/>
+    <c:ExactTimeConverter x:Key="Exact"/>
+    <c:InvertBoolConverter x:Key="Not"/>
+    <c:TreeIndentConverter x:Key="TreeIndent"/>
+    <c:FileRowOnlyConverter x:Key="FileRowOnly"/>
+</ResourceDictionary>

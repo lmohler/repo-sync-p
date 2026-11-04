@@ -1,0 +1,72 @@
+<Window x:Class="RepoSyncV3.Views.SearchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="1000" Height="680" ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="True" Title="Search all repos">
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Search all repos"/>
+            <TextBlock x:Name="ScopeText" Style="{StaticResource Text.Muted}" Margin="0,4,0,10" TextWrapping="Wrap"/>
+        </StackPanel>
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" x:Name="SearchButton" Content="Search" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="90" Margin="8,0,0,0" Click="Search_Click"/>
+            <TextBox x:Name="QueryBox" FontFamily="{StaticResource Font.Mono}" AutomationProperties.Name="Search text"
+                     ToolTip="Commits match on message, hash or author; branches on name or author; merge requests on title, number, branches or author. Every word must appear."/>
+        </DockPanel>
+        <WrapPanel Grid.Row="2" Margin="0,0,0,10">
+            <TextBlock Text="Look in:" Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <CheckBox x:Name="CommitsBox" Content="Commits" IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"
+                      ToolTip="Every branch's history (the latest commits of each repo), by message, hash or author"/>
+            <CheckBox x:Name="BranchesBox" Content="Branches" IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"
+                      ToolTip="Local branches and the server's branches you don't have locally"/>
+            <CheckBox x:Name="MrsBox" Content="Merge requests" IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"
+                      ToolTip="Open and merged merge requests (GitLab) / pull requests (GitHub); needs the server's token"/>
+            <CheckBox x:Name="CodeBox" Content="Code" Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="git grep over the tracked text files"/>
+            <CheckBox x:Name="CaseBox" Content="Match case" Margin="12,0,0,0" VerticalAlignment="Center" IsEnabled="{Binding IsChecked, ElementName=CodeBox}" ToolTip="Code search only"/>
+            <CheckBox x:Name="RegexBox" Content="Regex" Margin="12,0,0,0" VerticalAlignment="Center" IsEnabled="{Binding IsChecked, ElementName=CodeBox}"
+                      ToolTip="Extended regular expression (git grep -E); code search only"/>
+        </WrapPanel>
+        <DataGrid x:Name="Results" Grid.Row="3" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                  MouseDoubleClick="Results_DoubleClick" PreviewKeyDown="Results_KeyDown" AutomationProperties.Name="Search results">
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="4,10,0,4">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Text="{Binding ItemCount, StringFormat={}  {0} result(s)}" Style="{StaticResource Text.Muted}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Kind" Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           Foreground="{DynamicResource Brush.Accent}"/>
+                                <TextBlock Text="{Binding KindText}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Result" Binding="{Binding Title}" Width="2*"/>
+                <DataGridTextColumn Header="Details" Binding="{Binding Detail}" Width="2*" FontFamily="{StaticResource Font.Mono}"/>
+                <DataGridTextColumn Header="Date" Binding="{Binding DateText}" Width="90"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <DockPanel Grid.Row="4" Margin="0,12,0,0">
+            <TextBlock x:Name="StatusText" Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
+            <Button Content="Close" IsCancel="True" HorizontalAlignment="Right" MinWidth="80"/>
+        </DockPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,34 @@
+<Window x:Class="RepoSyncV3.Views.GitIgnoreWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="640" Height="600"
+        SizeToContent="Manual" ResizeMode="CanResize" Title=".gitignore">
+    <Grid Margin="20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Edit .gitignore"/>
+            <TextBlock x:Name="PathText" Style="{StaticResource Text.Muted}" Margin="0,4,0,12" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+
+        <TextBox x:Name="Editor" Grid.Row="1" Style="{StaticResource TextBox.Multiline}" FontFamily="Cascadia Mono, Consolas"
+                 FontSize="12.5" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                 VerticalContentAlignment="Top" TextChanged="Editor_TextChanged"/>
+
+        <TextBlock x:Name="HintText" Grid.Row="2" Style="{StaticResource Text.Muted}" Margin="1,6,0,0" TextWrapping="Wrap"
+                   Text="One pattern per line. # starts a comment, ! re-includes, a trailing / matches folders only. Files git already tracks stay tracked until you remove them from the index."/>
+
+        <DockPanel Grid.Row="3" Margin="0,16,0,0">
+            <Button Content="Open in editor" Click="OpenExternal_Click" MinWidth="110"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+                <Button x:Name="SaveButton" Content="Save" IsDefault="False" Style="{StaticResource Button.Primary}" Click="Save_Click" IsEnabled="False" MinWidth="80"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

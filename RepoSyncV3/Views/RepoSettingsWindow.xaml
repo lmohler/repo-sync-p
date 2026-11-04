@@ -1,0 +1,84 @@
+<Window x:Class="RepoSyncV3.Views.RepoSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="600" Title="Repo settings">
+    <StackPanel Margin="20,18">
+        <TextBlock x:Name="HeadingText" Style="{StaticResource Text.Heading}" FontSize="15"/>
+        <TextBlock x:Name="PathText" Style="{StaticResource Text.Muted}" Margin="0,4,0,0"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="NAME IN THE LIST" Margin="1,16,0,6"/>
+        <TextBox x:Name="NameBox" ToolTip="Leave empty for the folder name"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="AVATAR COLOR" Margin="1,16,0,6"/>
+        <StackPanel Orientation="Horizontal">
+            <Border x:Name="ColorPreview" Width="26" Height="26" CornerRadius="6" Margin="0,0,10,0">
+                <TextBlock x:Name="ColorPreviewText" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBox x:Name="ColorBox" Width="110" FontFamily="{StaticResource Font.Mono}" TextChanged="ColorBox_TextChanged"
+                     AutomationProperties.Name="Avatar color" ToolTip="#RRGGBB, or empty to pick one from the name"/>
+            <ItemsControl x:Name="PaletteList" Margin="10,0,0,0" VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Width="18" Height="18" Margin="0,0,4,0" Padding="0" Cursor="Hand" Click="Palette_Click" Tag="{Binding}" ToolTip="{Binding}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border CornerRadius="4" Background="{Binding}" BorderBrush="{DynamicResource Brush.PanelBorder}" BorderThickness="1"/>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        <TextBlock Style="{StaticResource Text.Muted}" Margin="1,4,0,0" Text="Empty = automatic (picked from the name)."/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="PROFILE" Margin="1,16,0,6"/>
+        <ComboBox x:Name="ProfileBox" DisplayMemberPath="Name" SelectionChanged="Workspace_Changed" HorizontalAlignment="Left" MinWidth="220"
+                  AutomationProperties.Name="Profile"/>
+        <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="1,4,0,0"
+                   Text="The repo is only listed (and fetched) while its profile is picked in the sidebar."/>
+
+        <Border Style="{StaticResource SidebarDivider}"/>
+        <TextBlock Style="{StaticResource SectionLabel}" Text="COMMITS IN THIS REPO ARE AUTHORED AS"/>
+        <TextBlock x:Name="CurrentIdentityText" Style="{StaticResource Text.Body}" FontWeight="SemiBold"/>
+        <Border x:Name="MismatchBorder" Style="{StaticResource Pill}" Tag="error" CornerRadius="6" Padding="10,6" Margin="0,8,0,0" HorizontalAlignment="Stretch">
+            <TextBlock x:Name="MismatchText" TextWrapping="Wrap" FontWeight="Normal" FontSize="12"/>
+        </Border>
+
+        <StackPanel Margin="0,10,0,0">
+            <RadioButton x:Name="KeepRadio" Content="Leave it as it is" GroupName="id" IsChecked="True" Margin="0,0,0,6" Checked="Identity_Changed"/>
+            <RadioButton x:Name="WorkspaceIdRadio" GroupName="id" Margin="0,0,0,6" Checked="Identity_Changed"/>
+            <RadioButton x:Name="GlobalRadio" Content="Use my global git identity (remove this repo's own)" GroupName="id" Margin="0,0,0,6" Checked="Identity_Changed"/>
+            <RadioButton x:Name="CustomRadio" Content="Use this name and email for this repo:" GroupName="id" Checked="Identity_Changed"/>
+            <Grid x:Name="CustomGrid" Margin="22,6,0,0" IsEnabled="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="CustomName" ToolTip="Name"/>
+                <TextBox x:Name="CustomEmail" Grid.Column="2" ToolTip="Email"/>
+            </Grid>
+        </StackPanel>
+
+        <Border Style="{StaticResource SidebarDivider}"/>
+        <TextBlock Style="{StaticResource SectionLabel}" Text="BEFORE EVERY PUSH, RUN"/>
+        <TextBox x:Name="PrePushBox" FontFamily="{StaticResource Font.Mono}" AutomationProperties.Name="Command to run before every push"
+                 ToolTip="Runs in the repo folder (cmd.exe). If it fails, the push stops and you see its output. Leave empty for none."/>
+        <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="1,4,0,0"
+                   Text="e.g. dotnet test, npm test, or a script. A failing check stops the push (you can still push anyway)."/>
+
+        <CheckBox x:Name="AutoFfBox" Margin="0,14,0,0"
+                  Content="Keep this branch up to date automatically (fast-forward on background fetch when it's clean and has nothing to push)"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" MinWidth="80"/>
+            <Button Content="Save" IsDefault="True" Style="{StaticResource Button.Primary}" MinWidth="90" Click="Save_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

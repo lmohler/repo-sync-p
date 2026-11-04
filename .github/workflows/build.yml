@@ -1,0 +1,75 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # The tests create real repos and commits.
+      - name: Git identity for tests
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.com"
+          git config --global init.defaultBranch main
+
+      - name: Restore
+        run: dotnet restore RepoSyncV3.slnx
+
+      - name: Build
+        run: dotnet build RepoSyncV3.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test RepoSyncV3.Tests -c Debug --logger "trx;LogFileName=results.trx"
+
+      - name: Publish single-file exe
+        shell: pwsh
+        run: |
+          $version = '3.1.0'
+          if ('${{ github.ref_type }}' -eq 'tag') { $version = '${{ github.ref_name }}'.TrimStart('v') }
+          dotnet publish RepoSyncV3/RepoSyncV3.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=$version -o publish
+          if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repo-sync-win-x64
+          path: publish/repo-sync-v3.exe
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: repo-sync-win-x64
+          path: publish
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/repo-sync-v3.exe -DestinationPath repo-sync-win-x64.zip
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: repo-sync-win-x64.zip
+          generate_release_notes: true

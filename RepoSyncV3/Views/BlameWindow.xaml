@@ -1,0 +1,57 @@
+<Window x:Class="RepoSyncV3.Views.BlameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner" Width="1000" Height="680" Title="Git Blame">
+    <Grid Margin="18,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="0,0,0,12">
+            <TextBlock Style="{StaticResource Text.Heading}" FontSize="15" Text="Git blame"/>
+            <TextBlock x:Name="FileText" Style="{StaticResource Text.Muted}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <DataGrid x:Name="BlameGrid" Grid.Row="1" Style="{StaticResource Grid.List}" AutoGenerateColumns="False"
+                  IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="#" Binding="{Binding LineNo}" Width="45">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}"/>
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,6,0"/>
+                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Commit" Binding="{Binding ShortHash}" Width="75">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Author" Binding="{Binding Author}" Width="120"/>
+                <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="90"/>
+                <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="Copy hash" Click="CopyHash_Click" Margin="0,0,8,0" MinWidth="90"/>
+            <Button Content="Close" IsCancel="True" MinWidth="80"/>
+        </StackPanel>
+    </Grid>
+</Window>
+

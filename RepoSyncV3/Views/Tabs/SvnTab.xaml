@@ -1,0 +1,240 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.SvnTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- primary: the whole round trip in one go -->
+        <Grid Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Work branch" Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding SvnBranches}" SelectedItem="{Binding SvnBranch}" Width="140" Margin="0,0,12,0" VerticalAlignment="Center"/>
+            <Button Grid.Column="2" Style="{StaticResource Button.Primary}" Command="{Binding SvnShipCommand}" VerticalAlignment="Center"
+                    ToolTip="Checks the work branch is committed, sends it to the SVN working copy, commits to SVN (TortoiseSVN, or the message here), then syncs back from SVN">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE724;" FontFamily="{StaticResource Font.Icons}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="Ship to SVN" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <CheckBox Grid.Column="3" Content="Commit message here" IsChecked="{Binding SvnInlineCommit}" VerticalAlignment="Center" Margin="12,0,8,0"
+                      ToolTip="On: Ship runs 'svn commit -m' with the message on the right. Off: Ship opens the TortoiseSVN commit dialog."/>
+            <TextBox Grid.Column="4" Text="{Binding SvnCommitMessage, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"
+                     Visibility="{Binding SvnInlineCommit, Converter={StaticResource Vis}}"
+                     ToolTip="SVN commit message, e.g. ARC30-1234 Fix totals"/>
+        </Grid>
+
+        <!-- secondary: the separate steps -->
+        <WrapPanel Grid.Row="1" Margin="0,0,0,6">
+            <Button Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Sync from SVN" Command="{Binding SvnSyncCommand}"
+                    ToolTip="svn update, record it on main, merge main into the work branch. Run it first; Send runs it after the SVN commit."/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE724;" Content="Send to SVN" Command="{Binding SvnSendCommand}"
+                    ToolTip="Apply every committed change on the work branch to the SVN working copy, then open the TortoiseSVN commit dialog. After the commit, syncs from SVN"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE73A;" Content="Send ticked" Command="{Binding SvnSendSelectedCommand}"
+                    ToolTip="Send only the ticked files below"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE7A7;" Content="Undo last send" Command="{Binding SvnUndoCommand}"
+                    ToolTip="Before you commit in SVN: revert what the last Send put in the working copy"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE8FB;" Content="TortoiseSVN commit" Command="{Binding SvnCommitDialogCommand}"
+                    ToolTip="Open the TortoiseSVN commit dialog on the working copy (e.g. after you cancelled it)"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE890;" Content="Preview sync" Command="{Binding SvnPreviewSyncCommand}" ToolTip="Shows what Sync from SVN would do. Changes nothing."/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE890;" Content="Preview send" Command="{Binding SvnPreviewSendCommand}" ToolTip="Lists what Send would change. Changes nothing."/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE74E;" Content="Record SVN on main" Command="{Binding SvnRecordCommand}"
+                    ToolTip="Only commit SVN's current state to git main (no svn update, no merge)"/>
+            <Button Style="{StaticResource Tool}" Tag="&#xE8DE;" Content="Move work folder" Command="{Binding SvnMoveWorktreeCommand}"
+                    ToolTip="Rename or move the work branch's folder with 'git worktree move', so git keeps track of it"/>
+        </WrapPanel>
+
+        <TextBlock Grid.Row="2" Text="{Binding SvnSummary}" TextWrapping="Wrap" Margin="0,0,0,4" Foreground="{DynamicResource Brush.TextPrimary}"/>
+        <ItemsControl Grid.Row="3" ItemsSource="{Binding SvnWarnings}" Margin="0,0,0,6">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource Pill}" Tag="warning" CornerRadius="6" Padding="10,4" Margin="0,2,0,0" HorizontalAlignment="Stretch">
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- progress of the last Ship / Send / Sync, step by step -->
+        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,0,0,8" Visibility="{Binding SvnSteps.Count, Converter={StaticResource Vis}}">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,4">
+                    <Button DockPanel.Dock="Right" Style="{StaticResource Button.Link}" Content="Clear" Command="{Binding SvnClearStepsCommand}"/>
+                    <TextBlock Text="{Binding SvnStepsTitle}" Style="{StaticResource SectionLabel}" Margin="1,0,0,0"/>
+                </DockPanel>
+                <ItemsControl ItemsSource="{Binding SvnSteps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="92"/>
+                                    <ColumnDefinition Width="260"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource Pill}" Tag="{Binding Tone}" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Font.Icons}" FontSize="10" VerticalAlignment="Center" Margin="0,1,5,0"/>
+                                        <TextBlock Text="{Binding StateText}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Message}" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- sub-views -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,4">
+            <RadioButton Style="{StaticResource Chip}" GroupName="SvnView" Content="Differs from SVN"
+                         IsChecked="{Binding SvnView, Converter={StaticResource Equals}, ConverterParameter=files}"/>
+            <RadioButton Style="{StaticResource Chip}" GroupName="SvnView" Content="SVN log"
+                         IsChecked="{Binding SvnView, Converter={StaticResource Equals}, ConverterParameter=log}"/>
+        </StackPanel>
+
+        <!-- files that differ from SVN + diff -->
+        <Grid Grid.Row="6">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SvnView}" Value="log">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="460"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,4">
+                <CheckBox DockPanel.Dock="Right" Content="Folders" IsChecked="{Binding IsFileTree}" VerticalAlignment="Center"
+                          ToolTip="Group the files by folder (also in Changes and History). Double-click or Left / Right folds a folder."/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource Tool}" Content="All" Command="{Binding SvnSelectAllCommand}"/>
+                    <Button Style="{StaticResource Tool}" Content="None" Command="{Binding SvnSelectNoneCommand}"/>
+                    <Button Style="{StaticResource Tool}" Tag="&#xE8A1;" Content="TortoiseMerge" Command="{Binding SvnMergeToolCommand}"
+                            ToolTip="Side by side: SVN on the left, the work folder's file on the right (edits there change it)"/>
+                </StackPanel>
+                </DockPanel>
+                <Border Grid.Row="1" Style="{StaticResource Card}" Padding="4">
+                    <ListBox x:Name="SvnFileList" ItemsSource="{Binding SvnFilesTree.Items}" ItemTemplateSelector="{StaticResource SvnFileTreeRows}"
+                             SelectedItem="{Binding SelectedSvnFile, Converter={StaticResource FileRowOnly}}" HorizontalContentAlignment="Stretch"
+                             MouseDoubleClick="TreeList_DoubleClick" PreviewKeyDown="TreeList_PreviewKeyDown"/>
+                </Border>
+                <TextBlock Grid.Row="1" Text="The work branch matches SVN." Style="{StaticResource Text.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="{Binding SvnFiles.Count, Converter={StaticResource Vis}, ConverterParameter=invert}"/>
+            </Grid>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+            <ListBox Grid.Column="2" Style="{StaticResource DiffList}" ItemsSource="{Binding SvnDiff}"/>
+        </Grid>
+
+        <!-- svn log, each revision linked to its git mirror commit (svn-rNNNN) -->
+        <Grid Grid.Row="6">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SvnView}" Value="log">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,4">
+                    <Button DockPanel.Dock="Left" Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Refresh" Command="{Binding SvnRefreshLogCommand}"
+                            ToolTip="Read the latest revisions from the SVN server again"/>
+                    <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding SvnLogLimits}" SelectedItem="{Binding SvnLogLimit}" Width="70" Margin="0,0,8,0"
+                              VerticalAlignment="Center" ToolTip="How many revisions to show"/>
+                    <Button DockPanel.Dock="Left" Style="{StaticResource Tool}" Tag="&#xE81C;" Content="Show in History" Command="{Binding SvnGoToMirrorCommand}"
+                            ToolTip="Open the git mirror commit (svn-rNNNN tag) of the selected revision on the History tab"/>
+                    <TextBlock Text="{Binding SvnLogStatus}" Style="{StaticResource Text.Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding SvnLogStatus}"/>
+                </DockPanel>
+                <DataGrid Grid.Row="1" Style="{StaticResource Grid.List}" ItemsSource="{Binding SvnRevisions}" SelectedItem="{Binding SelectedSvnRevision}"
+                          MouseDoubleClick="Revisions_MouseDoubleClick">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Revision" Binding="{Binding RevisionText}" Width="70" SortMemberPath="Revision"/>
+                        <DataGridTextColumn Header="Author" Binding="{Binding Author}" Width="110"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Date, Converter={StaticResource Ago}}" Width="90" SortMemberPath="Date">
+                            <DataGridTextColumn.CellStyle>
+                                <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                    <Setter Property="ToolTip" Value="{Binding Date, Converter={StaticResource Exact}}"/>
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Message" Binding="{Binding Subject}" Width="*"/>
+                        <DataGridTemplateColumn Header="git mirror" Width="120" SortMemberPath="MirrorTag">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Button Style="{StaticResource Button.Link}" Content="{Binding MirrorText}" HorizontalAlignment="Left"
+                                                Command="{Binding DataContext.SvnGoToMirrorCommand, ElementName=Root}" CommandParameter="{Binding}"
+                                                Visibility="{Binding IsMirrored, Converter={StaticResource Vis}}"
+                                                ToolTip="Show this commit on the History tab"/>
+                                        <Border Style="{StaticResource Pill}" Tag="warning" HorizontalAlignment="Left"
+                                                Visibility="{Binding IsMirrored, Converter={StaticResource Vis}, ConverterParameter=invert}"
+                                                ToolTip="Not on git main yet: run Sync from SVN">
+                                            <TextBlock Text="{Binding MirrorText}"/>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock Grid.Row="1" Text="No SVN revisions loaded." Style="{StaticResource Text.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="{Binding SvnRevisions.Count, Converter={StaticResource Vis}, ConverterParameter=invert}"/>
+            </Grid>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+            <Grid Grid.Column="2" DataContext="{Binding SelectedSvnRevision}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource Text.Muted}" Margin="0,4,0,4">
+                    <Run Text="{Binding RevisionText, Mode=OneWay}"/>
+                    <Run Text="{Binding Author, Mode=OneWay}"/>
+                    <Run Text="{Binding Date, Mode=OneWay, Converter={StaticResource Exact}}"/>
+                </TextBlock>
+                <TextBox Grid.Row="1" Style="{StaticResource TextBox.Multiline}" Text="{Binding Message, Mode=OneWay}" IsReadOnly="True"
+                         MaxHeight="140" Margin="0,0,0,6" VerticalScrollBarVisibility="Auto"/>
+                <ListBox Grid.Row="2" ItemsSource="{Binding DataContext.SvnRevisionPathsTree.Items, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                         ItemTemplateSelector="{StaticResource SvnPathTreeRows}" MouseDoubleClick="TreeList_DoubleClick" PreviewKeyDown="TreeList_PreviewKeyDown"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

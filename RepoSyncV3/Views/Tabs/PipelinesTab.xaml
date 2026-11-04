@@ -1,0 +1,121 @@
+﻿<UserControl x:Class="RepoSyncV3.Views.Tabs.PipelinesTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:RepoSyncV3.ViewModels"
+             xmlns:m="clr-namespace:RepoSyncV3.Models">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="220" MinHeight="100"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Margin="0,0,10,0">
+                <CheckBox DockPanel.Dock="Left" Content="All branches" IsChecked="{Binding PipelinesAllBranches}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button DockPanel.Dock="Left" Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Refresh" Command="{Binding RefreshPipelinesCommand}"/>
+                <TextBlock Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Text="Refreshes by itself while a pipeline runs."/>
+            </DockPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Style="{StaticResource Tool}" Tag="&#xE768;" Content="Run" Command="{Binding RunPipelineCommand}" ToolTip="Start a new pipeline (GitLab) / the workflows that allow it (GitHub) on this branch"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE72C;" Content="Retry" Command="{Binding RetryPipelineCommand}" ToolTip="Retry the failed jobs"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE71A;" Content="Cancel" Command="{Binding CancelPipelineCommand}"/>
+                <Button Style="{StaticResource Tool}" Tag="&#xE8A7;" Content="{Binding Repo.ServerName}" Command="{Binding OpenPipelineCommand}"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <DataGrid Style="{StaticResource Grid.List}" ItemsSource="{Binding Pipelines}" SelectedItem="{Binding SelectedPipeline}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Status" Width="110">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Pill.Pipeline}" Tag="{Binding Kind}" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="{Binding Kind}" Width="7" Height="7" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding Label}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Workflow" Binding="{Binding Name}" Width="1.4*"/>
+                    <DataGridTextColumn Header="Run" Binding="{Binding Id, StringFormat='#{0}'}" Width="90"/>
+                    <DataGridTextColumn Header="Branch" Binding="{Binding Ref}" Width="2*"/>
+                    <DataGridTextColumn Header="Commit" Binding="{Binding ShortSha}" Width="90"/>
+                    <DataGridTextColumn Header="Trigger" Binding="{Binding Source}" Width="*"/>
+                    <DataGridTextColumn Header="Started" Binding="{Binding CreatedAt, Converter={StaticResource Ago}}" Width="95">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="ToolTip" Value="{Binding CreatedAt, Converter={StaticResource Exact}}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="{Binding ServerMessage}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.TextSecondary}" TextAlignment="Center"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40" Visibility="{Binding ServerMessage, Converter={StaticResource Vis}}"/>
+        </Grid>
+        <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Rows"/>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" MinWidth="250"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <DataGrid Style="{StaticResource Grid.List}" ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Job" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding Label}">
+                                    <Ellipse Style="{StaticResource Dot.Pipeline}" Tag="{Binding Kind}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Stage" Binding="{Binding Stage}" Width="90"/>
+                    <DataGridTextColumn Header="Time" Binding="{Binding DurationText}" Width="65"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="80"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <DockPanel Margin="0,0,10,0" Background="Transparent" ToolTip="{Binding SelectedJob.Name}">
+                        <Border DockPanel.Dock="Right" Style="{StaticResource Pill.Pipeline}" Tag="{Binding SelectedJob.Kind}" Margin="8,0,0,0" Visibility="{Binding SelectedJob, Converter={StaticResource Vis}}">
+                            <TextBlock Text="{Binding SelectedJob.Label}"/>
+                        </Border>
+                        <TextBlock Text="{Binding SelectedJob.Name}" Style="{StaticResource Text.Heading}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE72C;" Content="Retry job" Command="{Binding RetryJobCommand}"/>
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE768;" Content="Run (manual)" Command="{Binding PlayJobCommand}" Visibility="{Binding Repo.IsGitLabServer, Converter={StaticResource Vis}}"/>
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE7BA;" Content="First error" Click="FirstError_Click"
+                                ToolTip="Jump to the first line that looks like an error"
+                                Visibility="{Binding HasJobLogError, Converter={StaticResource Vis}}"/>
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE74B;" Content="End" Click="End_Click" ToolTip="Jump to the end of the log"/>
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE895;" Content="Reload log" Command="{Binding ReloadJobLogCommand}"/>
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE896;" Content="Artifacts" Command="{Binding DownloadArtifactsCommand}"
+                                ToolTip="Download the build artifacts (GitLab: this job's; GitHub: the whole run's) to your Downloads folder"/>
+                        <Button Style="{StaticResource Tool.Ghost}" Tag="&#xE8A7;" Content="Open" Command="{Binding OpenJobCommand}"/>
+                    </StackPanel>
+                </Grid>
+                <TextBox x:Name="JobLogBox" Grid.Row="1" Text="{Binding JobLog, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource TextBox.Multiline}"
+                         TextWrapping="NoWrap" FontFamily="{StaticResource Font.Mono}" FontSize="11.5" Background="{DynamicResource Brush.Diff.Background}"
+                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextChanged="JobLogBox_TextChanged"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
