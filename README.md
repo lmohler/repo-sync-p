@@ -75,6 +75,8 @@ The tests create throwaway repositories under `%TEMP%` and delete them afterward
 
 Pre-built `repo-sync-v3.exe` (Windows x64, self-contained) is attached to each [GitHub Release](https://github.com/lmohler/repo-sync-p/releases). Every CI run also uploads the exe as a build artifact.
 
+> Windows may show a SmartScreen warning because the exe is unsigned: click **More info > Run anyway**, or right-click the downloaded zip, choose **Properties**, tick **Unblock**, then extract.
+
 ## License
 
 [MIT](LICENSE) - Copyright (c) 2026 Lucas Mohler
