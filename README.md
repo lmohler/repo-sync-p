@@ -2,7 +2,7 @@
 
 A Windows desktop client for everyday Git work across GitHub and GitLab: see every repo at a glance, commit, sync, branch, review merge / pull requests and watch pipelines without typing git commands.
 
-[![build](https://github.com/lmohler/repo-sync/actions/workflows/build.yml/badge.svg)](https://github.com/lmohler/repo-sync/actions/workflows/build.yml)
+[![build](https://github.com/lmohler/repo-sync-p/actions/workflows/build.yml/badge.svg)](https://github.com/lmohler/repo-sync-p/actions/workflows/build.yml)
 
 ![Repo overview with the computed next step](docs/screenshots/overview-dark.png)
 
