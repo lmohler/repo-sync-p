@@ -73,7 +73,7 @@ The tests create throwaway repositories under `%TEMP%` and delete them afterward
 
 ## Download
 
-Pre-built `repo-sync-v3.exe` (Windows x64, self-contained) is attached to each [GitHub Release](https://github.com/lmohler/repo-sync/releases). Every CI run also uploads the exe as a build artifact.
+Pre-built `repo-sync-v3.exe` (Windows x64, self-contained) is attached to each [GitHub Release](https://github.com/lmohler/repo-sync-p/releases). Every CI run also uploads the exe as a build artifact.
 
 ## License
 
